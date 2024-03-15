@@ -1,14 +1,14 @@
 "use client";
 
-import * as React from "react";
 import { useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { wrap } from "popmotion";
 import characters from "./data/characters.json";
 import styles from "../styles/index.module.scss";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
+import { useCharacterContext } from "@/context/CharacterContext"; // Importa el hook para acceder al contexto
 
 const variants = {
   enter: (direction: number) => ({
@@ -34,9 +34,10 @@ const variants = {
 };
 
 const CharacterCarousel = () => {
-  const router = useRouter();
   const [[page, direction], setPage] = useState([0, 0]);
   const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
+  const [isCharacterSelected, setIsCharacterSelected] = useState(false); // Variable de estado adicional
+  const { selectedCharacterId, setSelectedCharacterId } = useCharacterContext(); // Accede al contexto
 
   const imageIndex = wrap(0, characters.length, page);
 
@@ -52,17 +53,8 @@ const CharacterCarousel = () => {
     } else {
       setSelectedCharacters([...selectedCharacters, id]);
     }
-  };
-
-  const handleNextPage = () => {
-    // Obtener el ID del personaje seleccionado
-    const selectedCharacterId = selectedCharacters[selectedCharacters.length - 1];
-  
-    // Construir la URL con el ID del personaje como query parameter
-    const nextPageUrl = `/selecCharacters?characterId=${selectedCharacterId}`;
-  
-    // Redireccionar a la siguiente página
-    router.push(nextPageUrl);
+    setSelectedCharacterId(id); // Establece el personaje seleccionado en el contexto
+    setIsCharacterSelected(!selectedCharacters.includes(id)); // Actualiza la variable de estado
   };
 
   return (
@@ -106,6 +98,7 @@ const CharacterCarousel = () => {
           onChange={() => handleCharacterSelect(characters[imageIndex].id)}
         />
       </section>
+
       <nav className={styles.carouselControls}>
         <motion.button
           className={`${styles.carouselButton} ${styles.prevButton}`}
@@ -122,9 +115,17 @@ const CharacterCarousel = () => {
           <IoIosArrowForward className={styles.goldButton} />
         </motion.button>
       </nav>
-      <button onClick={handleNextPage}>seleciona un personaje</button>
+
+      {isCharacterSelected ? ( // Cambia la condición aquí
+        <Link href={`/characters`}>
+          siguiente
+        </Link>
+      ) : (
+        <p>Seleccionar personaje.</p>
+      )}
     </>
   );
 };
 
 export default CharacterCarousel;
+
