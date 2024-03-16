@@ -1,14 +1,22 @@
-"use client";
+/* eslint-disable react-hooks/exhaustive-deps */
+'use client';
 
-import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { wrap } from "popmotion";
-import characters from "./data/characters.json";
-import styles from "../styles/index.module.scss";
-import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
-import { useCharacterContext } from "@/context/CharacterContext"; // Importa el hook para acceder al contexto
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import { wrap } from 'popmotion';
+import charactersData from './data/characters.json';
+import styles from '../styles/index.module.scss';
+import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
+import { useCharacterContext } from '@/context/CharacterContext'; // Importa el hook para acceder al contexto
+
+// Define la interfaz para los personajes
+interface Character {
+  id: number;
+  name: string;
+  image: string;
+}
 
 const variants = {
   enter: (direction: number) => ({
@@ -38,8 +46,21 @@ const CharacterCarousel = () => {
   const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
   const [isCharacterSelected, setIsCharacterSelected] = useState(false); // Variable de estado adicional
   const { selectedCharacterId, setSelectedCharacterId } = useCharacterContext(); // Accede al contexto
+  const [opponentCharacterId, setOpponentCharacterId] = useState<number | null>(null); // ID del personaje oponente seleccionado aleatoriamente
+
+  const characters: Character[] = charactersData; // Convertir el JSON de personajes en un array de tipo Character
 
   const imageIndex = wrap(0, characters.length, page);
+
+  // Función para seleccionar un personaje aleatorio como oponente
+  const selectRandomOpponent = () => {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    setOpponentCharacterId(characters[randomIndex].id);
+  };
+
+  useEffect(() => {
+    selectRandomOpponent(); // Seleccionar un oponente aleatorio cuando el componente se monta por primera vez
+  }, [selectRandomOpponent]);
 
   const paginate = (newDirection: number) => {
     setPage([page + newDirection, newDirection]);
@@ -69,7 +90,7 @@ const CharacterCarousel = () => {
             animate="center"
             exit="exit"
             transition={{
-              x: { type: "spring", stiffness: 300, damping: 30 },
+              x: { type: 'spring', stiffness: 300, damping: 30 },
               opacity: { duration: 0.2 },
             }}
             className={styles.carouselItem}
@@ -128,4 +149,6 @@ const CharacterCarousel = () => {
 };
 
 export default CharacterCarousel;
+
+
 
