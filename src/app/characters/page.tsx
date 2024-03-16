@@ -12,6 +12,8 @@ interface Character {
   id: number;
   name: string;
   image: string;
+  attacks: string[]; // Agregar ataques al tipo Character
+  vida: number; // Agregar vida al tipo Character
 }
 
 const Character = () => {
@@ -35,6 +37,12 @@ const Character = () => {
     setOpponentCharacter(characters[randomIndex]);
   }, [selectedCharacterId]);
 
+   // Función para manejar el ataque del personaje seleccionado
+   const handleAttack = (attack: string) => {
+    console.log(`¡${selectedCharacter?.name} usa ${attack}!`);
+    // Aquí puedes agregar lógica para el ataque
+  };
+
   return (
     <>
       <section className={styles.battelContainer}>
@@ -43,7 +51,18 @@ const Character = () => {
           <article>
             <h2>{selectedCharacter.name}</h2>
             <Image src={selectedCharacter.image} alt={selectedCharacter.name} width={200} height={200} />
+
+              {/* Renderizar botones de ataques solo para el personaje seleccionado */}
+              {selectedCharacter.attacks.map((attack, index) => (
+              <div key={index}>
+                <button  onClick={() => handleAttack(attack)}>
+                {attack}
+              </button>
+              </div>
+            ))}
+             <p>Vida: {selectedCharacter.vida}</p>
           </article>
+          
         ) : (
           <p>No se ha seleccionado ningún personaje.</p>
         )}
@@ -53,6 +72,14 @@ const Character = () => {
           <article>
             <h2>{opponentCharacter.name}</h2>
             <Image src={opponentCharacter.image} alt={opponentCharacter.name} width={200} height={200} />
+
+              {/* Mantener los botones de ataques y la vida para el oponente */}
+              {opponentCharacter.attacks.map((attack, index) => (
+              <button key={index} onClick={() => handleAttack(attack)} style={{ visibility: 'hidden' }}>
+                {attack}
+              </button>
+            ))}
+            <p>Vida: {opponentCharacter.vida}</p>
           </article>
         )}
       </section>
