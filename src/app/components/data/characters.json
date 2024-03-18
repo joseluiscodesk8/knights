@@ -4,83 +4,83 @@
       "name": "Aries",
       "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjAVk9TApDwgKBn6JLIfbphdiC7Y6Iynogi-4y9FLaZrYLGE7vAXmf2_BMLab3PXoMRq1LTVGF_G_UmqMX5d2IcumEizOe87cV2HngkAqZK5VhZFW18ZLaSA08yOoSILA7IL6YuTWZlnnA/s1600/89010873_3253878291306460_5657323384623595520_o.jpg",
       "attacks": ["Stardust Revolution", "Crystal Wall"],
-      "vida": 20
+      "vida": 12
   },
   {
       "id": 2,
       "name": "Tauro",
       "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi8HKa0ebvo4VtGD9Zx55dGFeq5sun9Jalj3hXwlVEUiEgMyXzwPQ4gSevBSXawp5yxDhojvcCRY3j9Xat0aFpfm0ObS5wFv3KDDEocF0RtRdEtDf9IplUK44c1YlAzpFW_pIigTakc9_U/s1600/Aldebaran2.jpg",
       "attacks": ["Great Horn", "Great Horn: Another Dimension"],
-      "vida": 20
+      "vida": 12
   },
   {
       "id": 3,
       "name": "Géminis",
       "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjFmS6xYOUYflfQIWzw7T0atwR9l4qWbAbvZcMzpy5jgYY9FSrjTnTFisKb1hINQmsUgQHt5lY3N1jIweZM3gyZo5zvbf0BCSgDAtCn-KVqh-tmTn2_QjpdZj5fpGsxSfc8wNr521jc1RA/s1600/640.jpg",
       "attacks": ["Genro Maō Ken", "Genro Ken: Gōka no Ryū"],
-      "vida": 20
+      "vida": 12
   },
   {
       "id": 4,
       "name": "Cáncer",
-      "image": "/cancer.jpg",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgtOCIx780C-1sLiDoK2CHnu0-PqyaK7f3SV9ClwbxrrvKLEA0ymezup5rwSRzm6LVZqz7LhRMk8sQhOS2mhchB-ksmucnrkD57Btcv8XIi1fxEAKbhty7yK3NfZkotgX0OwO0sioX1x8I/s1600/mascara2.jpg",
       "attacks": ["Sekishiki Meikai Ha", "Sekishiki Kisoen"],
-      "vida": 20
+      "vida": 12
   },
   {
       "id": 5,
       "name": "Leo",
-      "image": "/leo.jpg",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjQGskQodvQB5y-HvHdXZ6I_CSWQ79J5KEiHRTlrzmBGQwFHjBdJaFFLWJVfO80iwRAP0u7de1FUahcgXc7Sb_kzcExHheVg2oHPYzLmg4B_Bq8RJh-Ex-FdEom4LlzB5yaPE-lpganJH4/s1600/aioria.jpg",
       "attacks": ["Lightning Plasma", "Lightning Bolt"],
-      "vida": 20
+      "vida": 12
   },
   {
       "id": 6,
       "name": "Virgo",
-      "image": "/virgo.jpg",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgtpg849I0aSUKiZB_97DeNPjandTJDkXhA2UZrXXARIsFetfsVuZUHOqwslfHaJJ4I91au9pw4PKlQD0Z0Ou5R8lEkUipXzV6m6sRMqfMI1NImc-eJfVFFmVZnHmo0MsYOhZ48dSQEu2U/s1600/shakahd.jpg",
       "attacks": ["Atomic Thunderbolt", "Atomic Thunderbolt: Heaven's Anger"],
-      "vida": 20
+      "vida": 12
   },
   {
       "id": 7,
       "name": "Libra",
-      "image": "/libra.jpg",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgzac8E1BQkc-5ImOzBaOyyQPYsK93cSHrQJpM7RGNMU3MUBZHoAI5hstzu6y1X_SI1uZ17VLYPRBL-P3Kcjdr54o3-zOHN93X6kMpPWUpZDHx27AsYQD7TdXBkVloLwu23kAh6AIy4IlM/s1600/anci%25C3%25A3ojovem.jpg",
       "attacks": ["Rozan Sho Ryu Ha", "Rozan Hyaku Ryū Ha"],
-      "vida": 20
+      "vida": 12
   },
   {
       "id": 8,
       "name": "Escorpio",
-      "image": "/escorpio.jpg",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi1Hc6Tl7ldZaO6xjn-dnfqN88-lH4ECvMSSTxor0n7nu-0ga5W17ubQXk7k32mMN7LTRvCCqC1sXPLiycQM45PG9FtgWHuEt9z06NcEtnoUO2zcgoJQ7-pVn_rAIYKOEpC03cbgjS_DjE/s1600/milo.jpg",
       "attacks": ["Scarlet Needle", "Antares"],
-      "vida": 20
+      "vida": 12
   },
   {
       "id": 9,
       "name": "Sagitario",
-      "image": "/sagitario.jpg",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj-Pv393HT5OoOHdfAEg8LoyhmgPNF2uuDNpuy423vdGhvxKiNIwwLH2afZT8j0fRHGxsKhtFSz7nUs44YdTR2UZywJn35mbuTOfYQ3dye3XjRhjlRKwjcZsD93F_7mhaalw0cGWdP1KAI/s1600/aioros+%25282%2529.jpg",
       "attacks": ["Light Impulse", "Arrow of Apollo"],
-      "vida": 20
+      "vida": 12
   },
   {
       "id": 10,
       "name": "Capricornio",
-      "image": "/capricornio.jpg",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjCLAEwjqg4uuqJQSD2-Sr3Pi9RiWC_ur72KkwJcJHP1qEXGnUT0dxP-_DxqO3qw_shnVNiAzAh-7hhyzUCY_3zG349QO4cPRqXil6gkoApdOJfjhzDv24XdU7B86pObvsRzdGQb6MwD_s/s1600/espectro+3.jpg",
       "attacks": ["Excalibur", "Excalibur II"],
-      "vida": 20
+      "vida": 12
   },
   {
       "id": 11,
       "name": "Acuario",
-      "image": "https://i.pinimg.com/originals/ad/b6/63/adb6639bced21fa4a0a73e52ed4b1d82.jpg",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEib0XIcvO2T4nisnVsMMfc7khKsxSZx_NhYvuwx0UTcPQ_62H_c9h1GaAhApA_jTuoPCbenW_V9ym5I7_YqXRV5xsQZXrrpt7Fpj7EshbWshhjJykGqCxh9leCaXZamCxEF6AVfLLOhbLU/s1600/espectro+2.jpg",
       "attacks": ["Diamond Dust", "Aurora Execution"],
-      "vida": 20
+      "vida": 12
   },
   {
       "id": 12,
       "name": "Piscis",
-      "image": "/piscis.jpg",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhcWUeaU-cJ_jZ1ke1_04XqTNfjaeWpCRne7vc9hbB8sFUdy6iKtj7hgQYA9O58fSzZhkqZC4kS6Ulgs8ghg4p3h4ZtTwFSQkiww2SPh5vsHbo8tlm1It4jzSrsYmEneYbbjp40Kd7myIo/s1600/afrosite.jpg",
       "attacks": ["Royal Demon Rose", "Scarlet Needle"],
-      "vida": 20
+      "vida": 12
   }
 ]
