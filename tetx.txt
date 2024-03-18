@@ -1,87 +1,23 @@
-[
-  {
-      "id": 1,
-      "name": "Aries",
-      "image": "/aries.jpg",
-      "attacks": ["Stardust Revolution", "Crystal Wall"],
-      "vida": 20
-  },
-  {
-      "id": 2,
-      "name": "Tauro",
-      "image": "/tauro.jpg",
-      "attacks": ["Great Horn", "Great Horn: Another Dimension"],
-      "vida": 20
-  },
-  {
-      "id": 3,
-      "name": "Géminis",
-      "image": "/geminis.jpg",
-      "attacks": ["Genro Maō Ken", "Genro Ken: Gōka no Ryū"],
-      "vida": 20
-  },
-  {
-      "id": 4,
-      "name": "Cáncer",
-      "image": "/cancer.jpg",
-      "attacks": ["Sekishiki Meikai Ha", "Sekishiki Kisoen"],
-      "vida": 20
-  },
-  {
-      "id": 5,
-      "name": "Leo",
-      "image": "/leo.jpg",
-      "attacks": ["Lightning Plasma", "Lightning Bolt"],
-      "vida": 20
-  },
-  {
-      "id": 6,
-      "name": "Virgo",
-      "image": "/virgo.jpg",
-      "attacks": ["Atomic Thunderbolt", "Atomic Thunderbolt: Heaven's Anger"],
-      "vida": 20
-  },
-  {
-      "id": 7,
-      "name": "Libra",
-      "image": "/libra.jpg",
-      "attacks": ["Rozan Sho Ryu Ha", "Rozan Hyaku Ryū Ha"],
-      "vida": 20
-  },
-  {
-      "id": 8,
-      "name": "Escorpio",
-      "image": "/escorpio.jpg",
-      "attacks": ["Scarlet Needle", "Antares"],
-      "vida": 20
-  },
-  {
-      "id": 9,
-      "name": "Sagitario",
-      "image": "/sagitario.jpg",
-      "attacks": ["Light Impulse", "Arrow of Apollo"],
-      "vida": 20
-  },
-  {
-      "id": 10,
-      "name": "Capricornio",
-      "image": "/capricornio.jpg",
-      "attacks": ["Excalibur", "Excalibur II"],
-      "vida": 20
-  },
-  {
-      "id": 11,
-      "name": "Acuario",
-      "image": "/acuario.jpg",
-      "attacks": ["Diamond Dust", "Aurora Execution"],
-      "vida": 20
-  },
-  {
-      "id": 12,
-      "name": "Piscis",
-      "image": "/piscis.jpg",
-      "attacks": ["Royal Demon Rose", "Scarlet Needle"],
-      "vida": 20
-  }
-]
-/////////////////
+https://santosenlatados.blogspot.com/2020/05/tert.html
+
+https://santosenlatados.blogspot.com/2020/05/aldebaran-de-touro.html
+
+https://santosenlatados.blogspot.com/2020/05/saga-de-gemeos.html
+
+https://santosenlatados.blogspot.com/2020/05/santocavaleiro-protetor-da-casa-de.html
+
+https://santosenlatados.blogspot.com/2020/05/aioria-de-leao.html
+
+https://santosenlatados.blogspot.com/2020/05/shaka-de-virgem.html
+
+https://santosenlatados.blogspot.com/2020/05/dohko-de-libra.html
+
+https://santosenlatados.blogspot.com/2020/06/milo-de-escorpiao.html
+
+https://santosenlatados.blogspot.com/2020/06/aioros-de-sagitario.html
+
+https://santosenlatados.blogspot.com/2020/06/shura-de-capricornio.html
+
+https://santosenlatados.blogspot.com/2020/07/camus-de-aquario.html
+
+https://santosenlatados.blogspot.com/2020/07/afrodite-de-peixes.html

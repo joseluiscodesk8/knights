@@ -2,21 +2,21 @@
   {
       "id": 1,
       "name": "Aries",
-      "image": "/aries.jpg",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjAVk9TApDwgKBn6JLIfbphdiC7Y6Iynogi-4y9FLaZrYLGE7vAXmf2_BMLab3PXoMRq1LTVGF_G_UmqMX5d2IcumEizOe87cV2HngkAqZK5VhZFW18ZLaSA08yOoSILA7IL6YuTWZlnnA/s1600/89010873_3253878291306460_5657323384623595520_o.jpg",
       "attacks": ["Stardust Revolution", "Crystal Wall"],
       "vida": 20
   },
   {
       "id": 2,
       "name": "Tauro",
-      "image": "/tauro.jpg",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi8HKa0ebvo4VtGD9Zx55dGFeq5sun9Jalj3hXwlVEUiEgMyXzwPQ4gSevBSXawp5yxDhojvcCRY3j9Xat0aFpfm0ObS5wFv3KDDEocF0RtRdEtDf9IplUK44c1YlAzpFW_pIigTakc9_U/s1600/Aldebaran2.jpg",
       "attacks": ["Great Horn", "Great Horn: Another Dimension"],
       "vida": 20
   },
   {
       "id": 3,
       "name": "Géminis",
-      "image": "/geminis.jpg",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjFmS6xYOUYflfQIWzw7T0atwR9l4qWbAbvZcMzpy5jgYY9FSrjTnTFisKb1hINQmsUgQHt5lY3N1jIweZM3gyZo5zvbf0BCSgDAtCn-KVqh-tmTn2_QjpdZj5fpGsxSfc8wNr521jc1RA/s1600/640.jpg",
       "attacks": ["Genro Maō Ken", "Genro Ken: Gōka no Ryū"],
       "vida": 20
   },
@@ -72,7 +72,7 @@
   {
       "id": 11,
       "name": "Acuario",
-      "image": "/acuario.jpg",
+      "image": "https://i.pinimg.com/originals/ad/b6/63/adb6639bced21fa4a0a73e52ed4b1d82.jpg",
       "attacks": ["Diamond Dust", "Aurora Execution"],
       "vida": 20
   },
