@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useCharacterContext } from '@/context/CharacterContext';
 import characters from '../components/data/characters.json';
 import Image from 'next/image';
@@ -21,6 +21,7 @@ const Character = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [opponentCharacter, setOpponentCharacter] = useState<Character | null>(null);
   const [showDrawAlert, setShowDrawAlert] = useState(false); // Estado para controlar la visualización del alerta de empate
+  const audioRef = useRef<HTMLAudioElement>(null); // Referencia al elemento de audio
 
   useEffect(() => {
     // Obtener el personaje seleccionado por el usuario
@@ -49,6 +50,11 @@ const Character = () => {
 
       console.log(`Ataque del jugador (${selectedCharacter.name}): ${attack} - ${selectedAttack}`);
       console.log(`Ataque del oponente (${opponentCharacter?.name}): ${opponentAttack}`);
+
+      // Reproducir el sonido de ataque
+      if (audioRef.current) {
+        audioRef.current.play();
+      }
 
       // Determinar el ganador del combate
       if (selectedAttack > opponentAttack) {
@@ -117,6 +123,9 @@ const Character = () => {
           </article>
         )}
       </section>
+
+      {/* Elemento de audio para reproducir el sonido de ataque */}
+      <audio ref={audioRef} src="/attack-sound.m4a" />
 
       {/* Mostrar el alerta de empate */}
       {showDrawAlert && (
