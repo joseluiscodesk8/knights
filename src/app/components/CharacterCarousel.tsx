@@ -138,7 +138,7 @@ const CharacterCarousel = () => {
       </nav>
 
       {isCharacterSelected ? ( // Cambia la condición aquí
-        <Link href={`/characters`}>
+        <Link href={`/mapas`}>
           siguiente
         </Link>
       ) : (
