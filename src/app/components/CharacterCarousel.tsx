@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { wrap } from 'popmotion';
-import charactersData from './data/characters.json';
+import charactersData from './data/bronze.json';
 import styles from '../styles/index.module.scss';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { useCharacterContext } from '@/context/CharacterContext'; // Importa el hook para acceder al contexto

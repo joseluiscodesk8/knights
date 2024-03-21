@@ -1,23 +1,288 @@
 https://santosenlatados.blogspot.com/2020/05/tert.html
 
-https://santosenlatados.blogspot.com/2020/05/aldebaran-de-touro.html
+personajes del usuario
 
-https://santosenlatados.blogspot.com/2020/05/saga-de-gemeos.html
+[
+    {
+      "id": 1,
+      "name": "Pegasus Seiya",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiHlXr_kBVriSBsIlexgyvx3_zzvIt2irW-8T-4BsN_pc9_SQsWW4S3t7HOezTGzvDLuTJFFpwOgG3jJH8lqtB3VrHu89BkJkxsEYEjroOsivggOSSgK6BWq69mANeqpHJ4UT4lK9BcC70/s1600/seiya.jpg",
+      "attacks": ["Pegasus Meteor Fist", "Pegasus Rolling Crush"],
+      "audioAttacks": ["/pegasusmeteorfist.m4a", "/pegasusrollingcrush.m4a"],
+      "vida": 10
+    },
+    {
+      "id": 2,
+      "name": "Dragon Shiryu",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhlmGI2OalZvsKCYgeWSbr52eEDBTUjbkYLCgk1d2VVSFPkAKRXKkIl4PItMZkmBFQrp076RroVSEOp8r2B66cANsStRVJjOgwajqP1xe6EpK5hAILPkQj-bCgGShe6BR5zRZCzR6TGygw/s1600/shiryu.jpg",
+      "attacks": ["Rozan Shoryuha", "Rozan Rising Dragon"],
+      "audioAttacks": ["/rozan.m4a", "/rozanrisingdragon.m4a"],
+      "vida": 10
+    },
+    {
+      "id": 3,
+      "name": "Cygnus Hyoga",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh2BndREFcLInjKhxxrERHx4yZk4Adtc9q2y5MDVTEzgfC13Fk6GD3qmxwQwxNmaWctpzPwos556RIDDqjNvumw3YjoPvnbqnWokTDTzZ9d7OjurvuusHEvAF2u79hs9Q5JmvBNCnq9YeU/s1600/hyoga2.jpg",
+      "attacks": ["Aurora Execution", "Diamond Dust"],
+      "audioAttacks": ["/auroraexecution.m4a", "/diamonddust.m4a"],
+      "vida": 10
+    },
+    {
+      "id": 4,
+      "name": "Andromeda Shun",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgqas3WYBTh5i8q3Uo9iQ_HT6aV8-1LTKOPottynFobQsaSH3vZO8mj3wsim9jcLYm2etWpI1ae6FqB2m9VodaFefHaoqIuFmMUoO9rExaTkT5ySSpZv1DjvcSwQ1SCeorNVHCYculwsUc/s1600/shun.jpg",
+      "attacks": ["Nebula Chain", "Nebula Storm"],
+      "audioAttacks": ["/nebulachain.m4a", "/nebulastorm.m4a"],
+      "vida": 10
+    },
+    {
+      "id": 5,
+      "name": "Phoenix Ikki",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhY3msZFAungSBgO0ofy_MLhYcJyN_SERbABWH6Y98ejeLjlTl0oxBacKs1HmsCCRIFcl6pyTFTorAxkrbKvNDyMH8vt5LroieJXewnw6ZXHrrgE7phZIAojnQbE7Hm6Tmj_YFxsH_4IHw/s1600/ikki.jpg",
+      "attacks": ["Phoenix Illusion Demon Fist", "Phoenix Wings Rise"],
+      "audioAttacks": ["/phoenixillusiondemonfist.m4a", "/phoenixwingsrise.m4a"],
+      "vida": 10
+    }
+  ]
+  
+'use client';
 
-https://santosenlatados.blogspot.com/2020/05/santocavaleiro-protetor-da-casa-de.html
+import { useEffect, useState, useRef } from 'react';
+import { useCharacterContext } from '@/context/CharacterContext';
+import characters from '../components/data/characters.json';
+import Image from 'next/image';
+import Link from 'next/link';
+import styles from "../styles/index.module.scss";
 
-https://santosenlatados.blogspot.com/2020/05/aioria-de-leao.html
+// Definir la interfaz para los personajes
+interface Character {
+  id: number;
+  name: string;
+  image: string;
+  attacks: string[];
+  vida: number;
+  audioAttacks: string[];
+}
 
-https://santosenlatados.blogspot.com/2020/05/shaka-de-virgem.html
+const Character = () => {
+  const { selectedCharacterId } = useCharacterContext();
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [opponentCharacter, setOpponentCharacter] = useState<Character | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
-https://santosenlatados.blogspot.com/2020/05/dohko-de-libra.html
+  useEffect(() => {
+    // Obtener el personaje seleccionado por el usuario
+    if (selectedCharacterId) {
+      const character: Character | undefined = characters.find((char) => char.id === selectedCharacterId);
+      if (character) {
+        setSelectedCharacter(character);
+      } else {
+        setSelectedCharacter(null);
+      }
+    }
 
-https://santosenlatados.blogspot.com/2020/06/milo-de-escorpiao.html
+    // Seleccionar un personaje oponente aleatorio
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    setOpponentCharacter(characters[randomIndex]);
+  }, [selectedCharacterId]);
 
-https://santosenlatados.blogspot.com/2020/06/aioros-de-sagitario.html
+  // Función para manejar el ataque del personaje seleccionado
+  const handleAttack = (attack: string, audioAttack: string) => {
+    // Verificar si la vida del personaje seleccionado es mayor que cero
+    if (selectedCharacter && selectedCharacter.vida > 0) {
+      // Generar un número aleatorio entre 1 y 6 para el personaje seleccionado
+      const selectedAttack = Math.floor(Math.random() * 6) + 1;
+      // Generar un número aleatorio entre 1 y 6 para el oponente
+      const opponentAttack = Math.floor(Math.random() * 6) + 1;
 
-https://santosenlatados.blogspot.com/2020/06/shura-de-capricornio.html
+      console.log(`Ataque del jugador (${selectedCharacter.name}): ${attack} - ${selectedAttack}`);
+      console.log(`Ataque del oponente (${opponentCharacter?.name}): ${opponentAttack}`);
 
-https://santosenlatados.blogspot.com/2020/07/camus-de-aquario.html
+      // Reproducir el sonido de ataque específico
+      if (audioRef.current) {
+        audioRef.current.src = audioAttack;
+        audioRef.current.play();
 
-https://santosenlatados.blogspot.com/2020/07/afrodite-de-peixes.html
+        // Agregar un evento para determinar el ganador después de que se complete la reproducción del audio
+        audioRef.current.addEventListener('ended', () => {
+          if (selectedAttack > opponentAttack) {
+            console.log(`${selectedCharacter.name} gana el combate.`);
+            // Restar vida al oponente
+            setOpponentCharacter(prevState => {
+              if (prevState && prevState.vida > 0) {
+                return {
+                  ...prevState,
+                  vida: prevState.vida - 1
+                };
+              }
+              return prevState;
+            });
+          } else if (selectedAttack < opponentAttack) {
+            console.log(`${opponentCharacter?.name} gana el combate.`);
+            // Restar vida al personaje seleccionado
+            setSelectedCharacter(prevState => {
+              if (prevState && prevState.vida > 0) {
+                return {
+                  ...prevState,
+                  vida: prevState.vida - 1
+                };
+              }
+              return prevState;
+            });
+          } else {
+            console.log(`El combate termina en empate.`);
+          }
+        });
+      }
+    }
+  };
+
+  return (
+    <>
+      <section className={styles.battelContainer}>
+        {/* Mostrar el personaje seleccionado por el usuario */}
+        {selectedCharacter ? (
+          <article>
+            <h2>{selectedCharacter.name}</h2>
+            <Image src={selectedCharacter.image} alt={selectedCharacter.name} width={200} height={200} />
+
+            {/* Renderizar botones de ataques solo para el personaje seleccionado */}
+            {selectedCharacter.attacks.map((attack, index) => (
+              <button
+                key={index}
+                onClick={() => handleAttack(attack, selectedCharacter.audioAttacks[index])}
+              >
+                {attack}
+              </button>
+            ))}
+
+            <p>Vida: {selectedCharacter.vida}</p>
+          </article>
+        ) : (
+          <p>No se ha seleccionado ningún personaje.</p>
+        )}
+
+        {/* Mostrar el personaje oponente */}
+        {opponentCharacter && (
+          <article>
+            <h2>{opponentCharacter.name}</h2>
+            <Image src={opponentCharacter.image} alt={opponentCharacter.name} width={200} height={200} />
+            <p>Vida: {opponentCharacter.vida}</p>
+          </article>
+        )}
+      </section>
+
+      {/* Elemento de audio para reproducir el sonido de ataque */}
+      <audio ref={audioRef} />
+
+      <nav className={styles.home}>
+        <Link href={'/'}>Home</Link>
+      </nav>
+    </>
+  );
+};
+
+export default Character;
+
+characters del oponente
+
+[
+  {
+      "id": 1,
+      "name": "Aries",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjAVk9TApDwgKBn6JLIfbphdiC7Y6Iynogi-4y9FLaZrYLGE7vAXmf2_BMLab3PXoMRq1LTVGF_G_UmqMX5d2IcumEizOe87cV2HngkAqZK5VhZFW18ZLaSA08yOoSILA7IL6YuTWZlnnA/s1600/89010873_3253878291306460_5657323384623595520_o.jpg",
+      "attacks": ["Stardust Revolution", "Crystal Wall"],
+      "audioAttacks": ["/revolutios.m4a", "/crystalwall.m4a"],
+      "vida": 12
+  },
+  {
+      "id": 2,
+      "name": "Tauro",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi8HKa0ebvo4VtGD9Zx55dGFeq5sun9Jalj3hXwlVEUiEgMyXzwPQ4gSevBSXawp5yxDhojvcCRY3j9Xat0aFpfm0ObS5wFv3KDDEocF0RtRdEtDf9IplUK44c1YlAzpFW_pIigTakc9_U/s1600/Aldebaran2.jpg",
+      "attacks": ["Great Horn", "Great Horn: Another Dimension"],
+      "audioAttacks": ["revolutios.m4a", "crystalwall.m4a"],
+      "vida": 12
+  },
+  {
+      "id": 3,
+      "name": "Géminis",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjFmS6xYOUYflfQIWzw7T0atwR9l4qWbAbvZcMzpy5jgYY9FSrjTnTFisKb1hINQmsUgQHt5lY3N1jIweZM3gyZo5zvbf0BCSgDAtCn-KVqh-tmTn2_QjpdZj5fpGsxSfc8wNr521jc1RA/s1600/640.jpg",
+      "attacks": ["Genro Maō Ken", "Genro Ken: Gōka no Ryū"],
+      "audioAttacks": ["revolutios.m4a", "crystallwall.m4a"],
+      "vida": 12
+  },
+  {
+      "id": 4,
+      "name": "Cáncer",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgtOCIx780C-1sLiDoK2CHnu0-PqyaK7f3SV9ClwbxrrvKLEA0ymezup5rwSRzm6LVZqz7LhRMk8sQhOS2mhchB-ksmucnrkD57Btcv8XIi1fxEAKbhty7yK3NfZkotgX0OwO0sioX1x8I/s1600/mascara2.jpg",
+      "attacks": ["Sekishiki Meikai Ha", "Sekishiki Kisoen"],
+      "audioAttacks": ["revolutios.m4a", "crystallwall.m4a"],
+      "vida": 12
+  },
+  {
+      "id": 5,
+      "name": "Leo",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjQGskQodvQB5y-HvHdXZ6I_CSWQ79J5KEiHRTlrzmBGQwFHjBdJaFFLWJVfO80iwRAP0u7de1FUahcgXc7Sb_kzcExHheVg2oHPYzLmg4B_Bq8RJh-Ex-FdEom4LlzB5yaPE-lpganJH4/s1600/aioria.jpg",
+      "attacks": ["Lightning Plasma", "Lightning Bolt"],
+      "audioAttacks": ["revolutios.m4a", "crystallwall.m4a"],
+      "vida": 12
+  },
+  {
+      "id": 6,
+      "name": "Virgo",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgtpg849I0aSUKiZB_97DeNPjandTJDkXhA2UZrXXARIsFetfsVuZUHOqwslfHaJJ4I91au9pw4PKlQD0Z0Ou5R8lEkUipXzV6m6sRMqfMI1NImc-eJfVFFmVZnHmo0MsYOhZ48dSQEu2U/s1600/shakahd.jpg",
+      "attacks": ["Atomic Thunderbolt", "Atomic Thunderbolt: Heaven's Anger"],
+      "audioAttacks": ["revolutios.m4a", "crystallwall.m4a"],
+      "vida": 12
+  },
+  {
+      "id": 7,
+      "name": "Libra",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgzac8E1BQkc-5ImOzBaOyyQPYsK93cSHrQJpM7RGNMU3MUBZHoAI5hstzu6y1X_SI1uZ17VLYPRBL-P3Kcjdr54o3-zOHN93X6kMpPWUpZDHx27AsYQD7TdXBkVloLwu23kAh6AIy4IlM/s1600/anci%25C3%25A3ojovem.jpg",
+      "attacks": ["Rozan Sho Ryu Ha", "Rozan Hyaku Ryū Ha"],
+      "audioAttacks": ["revolutios.m4a", "crystallwall.m4a"],
+      "vida": 12
+  },
+  {
+      "id": 8,
+      "name": "Escorpio",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi1Hc6Tl7ldZaO6xjn-dnfqN88-lH4ECvMSSTxor0n7nu-0ga5W17ubQXk7k32mMN7LTRvCCqC1sXPLiycQM45PG9FtgWHuEt9z06NcEtnoUO2zcgoJQ7-pVn_rAIYKOEpC03cbgjS_DjE/s1600/milo.jpg",
+      "attacks": ["Scarlet Needle", "Antares"],
+      "audioAttacks": ["revolutios.m4a", "crystallwall.m4a"],
+      "vida": 12
+  },
+  {
+      "id": 9,
+      "name": "Sagitario",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj-Pv393HT5OoOHdfAEg8LoyhmgPNF2uuDNpuy423vdGhvxKiNIwwLH2afZT8j0fRHGxsKhtFSz7nUs44YdTR2UZywJn35mbuTOfYQ3dye3XjRhjlRKwjcZsD93F_7mhaalw0cGWdP1KAI/s1600/aioros+%25282%2529.jpg",
+      "attacks": ["Light Impulse", "Arrow of Apollo"],
+      "audioAttacks": ["revolutios.m4a", "crystallwall.m4a"],
+      "vida": 12
+  },
+  {
+      "id": 10,
+      "name": "Capricornio",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjCLAEwjqg4uuqJQSD2-Sr3Pi9RiWC_ur72KkwJcJHP1qEXGnUT0dxP-_DxqO3qw_shnVNiAzAh-7hhyzUCY_3zG349QO4cPRqXil6gkoApdOJfjhzDv24XdU7B86pObvsRzdGQb6MwD_s/s1600/espectro+3.jpg",
+      "attacks": ["Excalibur", "Excalibur II"],
+      "audioAttacks": ["revolutios.m4a", "crystallwall.m4a"],
+      "vida": 12
+  },
+  {
+      "id": 11,
+      "name": "Acuario",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEib0XIcvO2T4nisnVsMMfc7khKsxSZx_NhYvuwx0UTcPQ_62H_c9h1GaAhApA_jTuoPCbenW_V9ym5I7_YqXRV5xsQZXrrpt7Fpj7EshbWshhjJykGqCxh9leCaXZamCxEF6AVfLLOhbLU/s1600/espectro+2.jpg",
+      "attacks": ["Diamond Dust", "Aurora Execution"],
+      "audioAttacks": ["/revolutios.m4a", "/crystallwall.m4a"],
+      "vida": 12
+  },
+  {
+      "id": 12,
+      "name": "Piscis",
+      "image": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhcWUeaU-cJ_jZ1ke1_04XqTNfjaeWpCRne7vc9hbB8sFUdy6iKtj7hgQYA9O58fSzZhkqZC4kS6Ulgs8ghg4p3h4ZtTwFSQkiww2SPh5vsHbo8tlm1It4jzSrsYmEneYbbjp40Kd7myIo/s1600/afrosite.jpg",
+      "attacks": ["Royal Demon Rose", "Scarlet Needle"],
+      "audioAttacks": ["revolutios.m4a", "crystallwall.m4a"],
+      "vida": 12
+  }
+]
+
+quiero que los personajes del usuario sean del bronze.json los del oponente del character.json pero los del openet que ya no sean alazar si no que en el orden de los id recuerda que esto es tsx
