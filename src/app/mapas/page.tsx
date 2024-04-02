@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { useCharacterContext } from '../../context/CharacterContext';
-import useCharacters from '../components/data/bronze.json';
-import Link from 'next/link';
+import { useEffect, useRef, useState, useMemo } from "react";
+import { useCharacterContext } from "../../context/CharacterContext";
+import useCharacters from "../components/data/bronze.json";
+import Link from "next/link";
 
 const CanvasComponent = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -14,41 +14,80 @@ const CanvasComponent = () => {
   const canvasHeight = 400; // Alto del canvas
 
   // Definir el mapa
-  const map = [
-    [1, 1, 0, 0, 1, 1, 1],
-    [1, 1, 1, 0, 1, 0, 1],
-    [0, 0, 1, 1, 1, 0, 1],
-    [0, 1, 1, 0, 1, 1, 1],
-    [1, 1, 0, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1, 1, 1],
-  ];
+  const map: number[][] = useMemo<number[][]>(
+    () => [
+      [1, 1, 0, 0, 1, 1],
+      [1, 1, 1, 0, 1, 0],
+      [0, 0, 1, 1, 1, 0],
+      [0, 1, 1, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0],
+      [1, 1, 1, 1, 1, 1],
+    ],
+    []
+  );
 
-  const tileSize = 50; // Tamaño de cada celda del mapa en píxeles
+  const tileSize = 85; // Tamaño de cada celda del mapa en píxeles
 
   useEffect(() => {
     if (selectedCharacterId) {
       // Encuentra el personaje seleccionado en el JSON
-      const character = useCharacters.find(char => char.id === selectedCharacterId);
+      const character = useCharacters.find(
+        (char) => char.id === selectedCharacterId
+      );
       setSelectedCharacter(character);
     }
   }, [selectedCharacterId]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const context = canvas?.getContext('2d');
+    const context = canvas?.getContext("2d");
 
-    if (canvas && context && selectedCharacter) {
-      // Cargar la imagen del personaje
-      const characterImage = new Image();
-      characterImage.src = selectedCharacter.image;
+    if (canvas && context) {
+      // Calcula el tamaño de la celda para que el mapa ocupe el 100% del ancho y alto del canvas
+      const cellWidth = canvas.width / map[0].length;
+      const cellHeight = canvas.height / map.length;
 
-      // Dibujar el personaje en el canvas cuando la imagen se haya cargado
-      characterImage.onload = () => {
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(characterImage, position.x, position.y, 100, 100); // Ajusta el tamaño del personaje según sea necesario
-      };
+      // Limpiar el canvas antes de dibujar el mapa
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Iterar sobre cada celda del mapa
+      for (let row = 0; row < map.length; row++) {
+        for (let col = 0; col < map[0].length; col++) {
+          const tileX = col * cellWidth;
+          const tileY = row * cellHeight;
+
+          // Establecer el color según el valor de la celda
+          context.fillStyle = map[row][col] === 1 ? "white" : "#1416";
+
+          // Dibujar un rectángulo en la posición de la celda
+          context.fillRect(tileX, tileY, cellWidth, cellHeight);
+
+          // Dibujar un borde alrededor del rectángulo
+          context.strokeStyle = "gray";
+          context.strokeRect(tileX, tileY, cellWidth, cellHeight);
+        }
+      }
+
+      if (selectedCharacter) {
+        // Cargar la imagen del personaje
+        const characterImage = new Image();
+        characterImage.src = selectedCharacter.image;
+  
+        // Dibujar el personaje en el canvas cuando la imagen se haya cargado
+        characterImage.onload = () => {
+          // Calcular las coordenadas de posición del personaje en el canvas
+          const newRow: number = Math.floor(position.y / tileSize);
+          const newCol: number = Math.floor(position.x / tileSize);
+          const characterX = newCol * cellWidth;
+          const characterY = newRow * cellHeight;
+  
+          // Dibujar la imagen del personaje en las coordenadas calculadas
+          context.drawImage(characterImage, characterX, characterY, cellWidth, cellHeight);
+        };
+      }
     }
-  }, [selectedCharacter, position]);
+  }, [selectedCharacter, position, map, canvasWidth, canvasHeight]);
+
 
   // Función para verificar si el movimiento es válido según el mapa
   const isValidMove = (row: number, col: number) => {
@@ -104,7 +143,12 @@ const CanvasComponent = () => {
 
   return (
     <div>
-      <canvas ref={canvasRef} width={canvasWidth} height={canvasHeight} style={{ border: '1px solid black', margin: '20px' }}></canvas>
+      <canvas
+        ref={canvasRef}
+        width={canvasWidth}
+        height={canvasHeight}
+        style={{ border: "1px solid black", margin: "20px" }}
+      ></canvas>
       <div>
         <button onClick={moveLeft}>Left</button>
         <button onClick={moveRight}>Right</button>
@@ -117,4 +161,3 @@ const CanvasComponent = () => {
 };
 
 export default CanvasComponent;
-
