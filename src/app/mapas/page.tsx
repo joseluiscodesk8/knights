@@ -4,24 +4,23 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { useCharacterContext } from "../../context/CharacterContext";
 import useCharacters from "../components/data/bronze.json";
 import Link from "next/link";
+import styles from "../styles/index.module.scss";
 
 const CanvasComponent = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { selectedCharacterId } = useCharacterContext();
-  const [position, setPosition] = useState({ x: 0, y: 300 }); // Posición inicial del personaje en la parte inferior del canvas
+  const [position, setPosition] = useState({ x: 0, y: 0 }); // Posición inicial del personaje en la parte inferior del canvas
   const [selectedCharacter, setSelectedCharacter] = useState<any>(null); // Variable de estado para almacenar los datos del personaje seleccionado
-  const canvasWidth = 600; // Ancho del canvas
-  const canvasHeight = 400; // Alto del canvas
 
   // Definir el mapa
   const map: number[][] = useMemo<number[][]>(
     () => [
-      [1, 1, 0, 0, 1, 1],
+      [1, 1, 0, 0, 1, 3],
       [1, 1, 1, 0, 1, 0],
       [0, 0, 1, 1, 1, 0],
       [0, 1, 1, 0, 1, 1],
       [1, 1, 0, 0, 0, 0],
-      [1, 1, 1, 1, 1, 1],
+      [2, 1, 1, 1, 1, 1],
     ],
     []
   );
@@ -29,6 +28,21 @@ const CanvasComponent = () => {
   const tileSize = 85; // Tamaño de cada celda del mapa en píxeles
 
   useEffect(() => {
+
+    // Encuentra la posición del personaje en el mapa
+  let charPosition = { x: 0, y: 0 };
+  for (let row = 0; row < map.length; row++) {
+    for (let col = 0; col < map[0].length; col++) {
+      if (map[row][col] === 2) {
+        charPosition = { x: col * tileSize, y: row * tileSize };
+        break;
+      }
+    }
+  }
+
+  // Actualiza la posición del personaje en el canvas
+  setPosition(charPosition);
+
     if (selectedCharacterId) {
       // Encuentra el personaje seleccionado en el JSON
       const character = useCharacters.find(
@@ -36,7 +50,7 @@ const CanvasComponent = () => {
       );
       setSelectedCharacter(character);
     }
-  }, [selectedCharacterId]);
+  }, [map, selectedCharacterId]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -57,7 +71,16 @@ const CanvasComponent = () => {
           const tileY = row * cellHeight;
 
           // Establecer el color según el valor de la celda
-          context.fillStyle = map[row][col] === 1 ? "white" : "#1416";
+            // Establecer el color según el valor de la celda
+            if (map[row][col] === 1) {
+              context.fillStyle = "white";
+            } else if (map[row][col] === 0) {
+              context.fillStyle = "#1416";
+            } else if (map[row][col] === 2) {
+              context.fillStyle = "blue"; // Cambia el color para la celda con valor 2
+            } else if (map[row][col] === 3) {
+              context.fillStyle = "green"; // Cambia el color para la celda con valor 3
+            }
 
           // Dibujar un rectángulo en la posición de la celda
           context.fillRect(tileX, tileY, cellWidth, cellHeight);
@@ -86,8 +109,16 @@ const CanvasComponent = () => {
         };
       }
     }
-  }, [selectedCharacter, position, map, canvasWidth, canvasHeight]);
+  }, [selectedCharacter, position, map]);
 
+  useEffect(() => {
+    // Verifica si la posición actual del personaje coincide con la celda de valor 3 en el mapa
+    if (map[Math.floor(position.y / tileSize)][Math.floor(position.x / tileSize)] === 3) {
+      // Aquí puedes realizar cualquier evento que desees cuando el personaje esté en la celda con valor 3
+      alert("thnx for your help caroline muak");
+    }
+  }, [position, map]);
+  
 
   // Función para verificar si el movimiento es válido según el mapa
   const isValidMove = (row: number, col: number) => {
@@ -97,7 +128,7 @@ const CanvasComponent = () => {
     }
 
     // Verifica si la celda en la nueva posición es un camino válido
-    return map[row][col] === 1;
+    return map[row][col] !== 0;
   };
 
   // Funciones para manejar el movimiento del personaje
@@ -142,21 +173,18 @@ const CanvasComponent = () => {
   };
 
   return (
-    <div>
+    <section className={styles.Canvas}>
       <canvas
         ref={canvasRef}
-        width={canvasWidth}
-        height={canvasHeight}
-        style={{ border: "1px solid black", margin: "20px" }}
       ></canvas>
       <div>
-        <button onClick={moveLeft}>Left</button>
-        <button onClick={moveRight}>Right</button>
+      <button onClick={moveRight}>Right</button>
         <button onClick={moveUp}>Up</button>
+        <button onClick={moveLeft}>Left</button>
         <button onClick={moveDown}>Down</button>
       </div>
       <Link href={"/"}>home</Link>
-    </div>
+    </section>
   );
 };
 
