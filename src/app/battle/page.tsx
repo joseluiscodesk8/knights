@@ -6,6 +6,7 @@ import useCharacters from '../components/data/bronze.json';
 import character from '../components/data/characters.json';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styles from "../styles/index.module.scss";
 
 // Definir la interfaz para los personajes
@@ -23,6 +24,7 @@ const BattlePage = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [opponentCharacter, setOpponentCharacter] = useState<Character | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const router = useRouter();
 
    // useEffect para cargar el personaje seleccionado y al oponente
    useEffect(() => {
@@ -50,56 +52,59 @@ const BattlePage = () => {
 
   }, [selectedCharacterId, opponentCharacterId]);
 
-  // Función para manejar el ataque del personaje seleccionado
   const handleAttack = (attack: string, audioAttack: string) => {
-    // Verificar si la vida del personaje seleccionado es mayor que cero
-    if (selectedCharacter && selectedCharacter.vida > 0) {
-      // Generar un número aleatorio entre 1 y 6 para el personaje seleccionado
-      const selectedAttack = Math.floor(Math.random() * 6) + 1;
-      // Generar un número aleatorio entre 1 y 6 para el oponente
-      const opponentAttack = Math.floor(Math.random() * 6) + 1;
+  // Verificar si ambos personajes están vivos
+  if (selectedCharacter && selectedCharacter.vida > 0 && opponentCharacter && opponentCharacter.vida > 0) {
+    // Generar un número aleatorio entre 1 y 6 para el jugador
+    const selectedAttack = Math.floor(Math.random() * 6) + 1;
+    // Generar un número aleatorio entre 1 y 6 para el oponente
+    const opponentAttack = Math.floor(Math.random() * 6) + 1;
 
-      console.log(`Ataque del jugador (${selectedCharacter.name}): ${attack} - ${selectedAttack}`);
-      console.log(`Ataque del oponente (${opponentCharacter?.name}): ${opponentAttack}`);
+    console.log(`Ataque del jugador (${selectedCharacter.name}): ${attack} - ${selectedAttack}`);
+    console.log(`Ataque del oponente (${opponentCharacter.name}): ${opponentAttack}`);
 
-      // Reproducir el sonido de ataque específico
-      if (audioRef.current) {
-        audioRef.current.src = audioAttack;
-        audioRef.current.play();
+    // Reproducir el sonido de ataque específico
+    if (audioRef.current) {
+      audioRef.current.src = audioAttack;
+      audioRef.current.addEventListener('ended', () => {
+        // Determinar el ganador del combate
+        let winner: 'player' | 'opponent' | 'tie' = 'tie';
+        if (selectedAttack > opponentAttack) {
+          winner = 'player';
+        } else if (selectedAttack < opponentAttack) {
+          winner = 'opponent';
+        }
 
-        // Agregar un evento para determinar el ganador después de que se complete la reproducción del audio
-        audioRef.current.addEventListener('ended', () => {
-          if (selectedAttack > opponentAttack) {
-            console.log(`${selectedCharacter.name} gana el combate.`);
-            // Restar vida al oponente
-            setOpponentCharacter(prevState => {
-              if (prevState && prevState.vida > 0) {
-                return {
-                  ...prevState,
-                  vida: prevState.vida - 1
-                };
-              }
-              return prevState;
-            });
-          } else if (selectedAttack < opponentAttack) {
-            console.log(`${opponentCharacter?.name} gana el combate.`);
-            // Restar vida al personaje seleccionado
-            setSelectedCharacter(prevState => {
-              if (prevState && prevState.vida > 0) {
-                return {
-                  ...prevState,
-                  vida: prevState.vida - 1
-                };
-              }
-              return prevState;
-            });
-          } else {
-            console.log(`El combate termina en empate.`);
-          }
-        });
-      }
+        // Actualizar la vida de los personajes
+        if (winner === 'player') {
+          console.log(`${selectedCharacter.name} gana el combate.`);
+          setOpponentCharacter(prevState => ({
+            ...prevState!,
+            vida: Math.max(0, prevState!.vida - 1)
+          }));
+        } else if (winner === 'opponent') {
+          console.log(`${opponentCharacter.name} gana el combate.`);
+          setSelectedCharacter(prevState => ({
+            ...prevState!,
+            vida: Math.max(0, prevState!.vida - 1)
+          }));
+        } else {
+          console.log(`El combate termina en empate.`);
+        }
+
+        // Verificar si algún personaje llegó a cero vida
+        if (selectedCharacter && selectedCharacter.vida <= 0) {
+          console.log(`${selectedCharacter.name} ha perdido, ya no puede atacar.`);
+        }
+        if (opponentCharacter && opponentCharacter.vida <= 0) {
+          console.log(`${opponentCharacter.name} ha perdido, ya no puede atacar.`);
+        }
+      });
+      audioRef.current.play();
     }
-  };
+  }
+};
+
 
   return (
     <>
@@ -108,7 +113,7 @@ const BattlePage = () => {
         {selectedCharacter ? (
           <article>
             <h2>{selectedCharacter.name}</h2>
-            <Image src={selectedCharacter.image} alt={selectedCharacter.name} width={200} height={200} />
+            <Image src={selectedCharacter.image} alt={selectedCharacter.name} width={200} height={200} priority={true}/>
 
             {/* Renderizar botones de ataques solo para el personaje seleccionado */}
             {selectedCharacter.attacks.map((attack, index) => (
@@ -130,7 +135,7 @@ const BattlePage = () => {
         {opponentCharacter && (
           <article>
             <h2>{opponentCharacter.name}</h2>
-            <Image src={opponentCharacter.image} alt={opponentCharacter.name} width={200} height={200} />
+            <Image src={opponentCharacter.image} alt={opponentCharacter.name} width={200} height={200} priority={true} />
             <p>Vida: {opponentCharacter.vida}</p>
           </article>
         )}

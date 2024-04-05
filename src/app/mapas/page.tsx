@@ -13,8 +13,8 @@ const CanvasComponent = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [selectedCharacter, setSelectedCharacter] = useState<any>(null);
   const [isAtPosition3, setIsAtPosition3] = useState(false); // Variable de estado para controlar si el personaje está en la posición 3
-  const widthCanvas = "300vw";
-  const heightCanvas = "300vh";
+  const widthCanvas = "350vw";
+  const heightCanvas = "400vh";
   const router = useRouter(); // Obtiene el objeto router
 
   interface ImagePaths {
@@ -125,8 +125,8 @@ const CanvasComponent = () => {
       const images: ImagePaths = {
         0:  "https://previews.123rf.com/images/jacekbieniek/jacekbieniek1202/jacekbieniek120200007/12433760-muro-griego-tradicional-hecha-de-piedras-amarillas-lados-de-rodas.jpg", // Ruta de la imagen para el valor 0
         1: "https://img3.stockfresh.com/files/s/spectral/m/63/4780593_stock-photo-plaster-floor.jpg", // Ruta de la imagen para el valor 1
-        2: "blue",
-        3: "green",
+        2: "#000",
+        3: "#000",
       };
   
       for (let row = 0; row < map.length; row++) {
