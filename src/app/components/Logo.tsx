@@ -1,5 +1,5 @@
 
-const Logo = () => {
+const Logo: React.FC = () => {
   return (
     <header>
         <h1>Kinghts of Zodial</h1>

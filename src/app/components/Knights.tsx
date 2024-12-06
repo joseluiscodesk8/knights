@@ -1,17 +1,12 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-'use client';
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { wrap } from 'popmotion';
 import charactersData from './data/bronze.json';
 import styles from '../styles/index.module.scss';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
-import { useCharacterContext } from '@/context/CharacterContext'; // Importa el hook para acceder al contexto
+import { useCharacterContext } from '@/app/context/CharacterContext'; 
 
-// Define la interfaz para los personajes
 interface Character {
   id: number;
   name: string;
@@ -41,26 +36,15 @@ const variants = {
   }),
 };
 
-const CharacterCarousel = () => {
+const Knights: React.FC<{ onCharacterSelect: () => void }> = ({ onCharacterSelect }) => {
   const [[page, direction], setPage] = useState([0, 0]);
   const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
-  const [isCharacterSelected, setIsCharacterSelected] = useState(false); // Variable de estado adicional
-  const { selectedCharacterId, setSelectedCharacterId } = useCharacterContext(); // Accede al contexto
-  const [opponentCharacterId, setOpponentCharacterId] = useState<number | null>(null); // ID del personaje oponente seleccionado aleatoriamente
+  const [isCharacterSelected, setIsCharacterSelected] = useState(false);
+  const { selectedCharacterId, setSelectedCharacterId } = useCharacterContext();
 
-  const characters: Character[] = charactersData; // Convertir el JSON de personajes en un array de tipo Character
+  const characters: Character[] = charactersData;
 
   const imageIndex = wrap(0, characters.length, page);
-
-  // Función para seleccionar un personaje aleatorio como oponente
-  const selectRandomOpponent = () => {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    setOpponentCharacterId(characters[randomIndex].id);
-  };
-
-  useEffect(() => {
-    selectRandomOpponent(); // Seleccionar un oponente aleatorio cuando el componente se monta por primera vez
-  }, [selectRandomOpponent]);
 
   const paginate = (newDirection: number) => {
     setPage([page + newDirection, newDirection]);
@@ -74,8 +58,10 @@ const CharacterCarousel = () => {
     } else {
       setSelectedCharacters([...selectedCharacters, id]);
     }
-    setSelectedCharacterId(id); // Establece el personaje seleccionado en el contexto
-    setIsCharacterSelected(!selectedCharacters.includes(id)); // Actualiza la variable de estado
+
+    setSelectedCharacterId(id);
+    setIsCharacterSelected(!selectedCharacters.includes(id));
+    onCharacterSelect();
   };
 
   return (
@@ -123,32 +109,21 @@ const CharacterCarousel = () => {
       <nav className={styles.carouselControls}>
         <motion.button
           className={`${styles.carouselButton} ${styles.prevButton}`}
-          whileTap={{ scale: 0.9 }} // Efecto de escala al hacer clic
+          whileTap={{ scale: 0.9 }}
           onClick={() => paginate(-1)}
         >
           <IoIosArrowBack className={styles.goldButton} />
         </motion.button>
         <motion.button
           className={`${styles.carouselButton} ${styles.nextButton}`}
-          whileTap={{ scale: 0.9 }} // Efecto de escala al hacer clic
+          whileTap={{ scale: 0.9 }}
           onClick={() => paginate(1)}
         >
           <IoIosArrowForward className={styles.goldButton} />
         </motion.button>
       </nav>
-
-      {isCharacterSelected ? ( // Cambia la condición aquí
-        <Link href={`/mapas`}>
-          siguiente
-        </Link>
-      ) : (
-        <p>Seleccionar personaje.</p>
-      )}
     </>
   );
 };
 
-export default CharacterCarousel;
-
-
-
+export default Knights;

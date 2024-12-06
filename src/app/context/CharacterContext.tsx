@@ -5,17 +5,21 @@ import { createContext, useState, useContext, ReactNode } from "react";
 // Define el tipo para el contexto
 interface CharacterContextType {
   selectedCharacterId: number | null;
-  opponentCharacterId: number | null; // Nuevo
+  opponentCharacterId: number | null;
+  isCharacterSelected: boolean; // Nuevo
   setSelectedCharacterId: React.Dispatch<React.SetStateAction<number | null>>;
-  setOpponentCharacterId: React.Dispatch<React.SetStateAction<number | null>>; // Nuevo
+  setOpponentCharacterId: React.Dispatch<React.SetStateAction<number | null>>;
+  setIsCharacterSelected: React.Dispatch<React.SetStateAction<boolean>>; // Nuevo
 }
 
 // Crea el contexto
 const CharacterContext = createContext<CharacterContextType>({
   selectedCharacterId: null,
-  opponentCharacterId: null, // Nuevo
+  opponentCharacterId: null,
+  isCharacterSelected: false, // Nuevo
   setSelectedCharacterId: () => {},
-  setOpponentCharacterId: () => {}, // Nuevo
+  setOpponentCharacterId: () => {},
+  setIsCharacterSelected: () => {}, // Nuevo
 });
 
 // Define el tipo para el children en el proveedor del contexto
@@ -27,9 +31,15 @@ type CharacterProviderProps = {
 export const CharacterProvider: React.FC<CharacterProviderProps> = ({ children }) => {
   const [selectedCharacterId, setSelectedCharacterId] = useState<number | null>(null);
   const [opponentCharacterId, setOpponentCharacterId] = useState<number | null>(null); // Nuevo
+  const [isCharacterSelected, setIsCharacterSelected] = useState<boolean>(false);
 
   return (
-    <CharacterContext.Provider value={{ selectedCharacterId, opponentCharacterId, setSelectedCharacterId, setOpponentCharacterId }}>
+    <CharacterContext.Provider value={{      selectedCharacterId,
+      opponentCharacterId,
+      isCharacterSelected, // Nuevo
+      setSelectedCharacterId,
+      setOpponentCharacterId,
+      setIsCharacterSelected, }}>
       {children}
     </CharacterContext.Provider>
   );
