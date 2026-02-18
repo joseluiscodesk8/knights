@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { ReactNode } from 'react';
 import { Inter } from 'next/font/google';
-import { CharacterProvider } from '@/app/context/CharacterContext';
 
-import './styles/globals.scss';
+import '../styles/globals.scss';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -16,9 +15,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html lang="en">
       <body className={inter.className}>
-        <CharacterProvider>
-          {children}
-        </CharacterProvider>
+         {children}
       </body>
     </html>
   );

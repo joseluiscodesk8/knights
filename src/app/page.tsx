@@ -1,105 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import dynamic from "next/dynamic";
-import Logo from "./components/Logo";
-import styles from "./styles/index.module.scss";
-import { NextPage } from "next";
+import Bronze from "../components/Bronze";
+import Battle from "../components/battle";
+import saintsData from "../data/bronce.json";
+import { Saint } from "../types/sanit";
 
-const DynamicKnights = dynamic(() => import("./components/Knights"));
-const DynamicMaps = dynamic(() => import("./components/Maps"));
-const DynamicBattle = dynamic(() => import("./components/Battle"));
-
-const Home: NextPage = () => {
-  const [currentComponent, setCurrentComponent] = useState<
-    "knights" | "maps" | "battle"
-  >("knights");
-  const [isCharacterSelected, setIsCharacterSelected] = useState(false);
-
-  const handleNext = () => {
-    if (isCharacterSelected) {
-      setCurrentComponent("maps");
-    } else {
-      alert("Debes seleccionar un personaje antes de continuar.");
-    }
-  };
-
-  const startBattle = () => {
-    setCurrentComponent("battle");
-  };
+export default function Page() {
+  const [selectedSaint, setSelectedSaint] = useState<Saint | null>(null);
 
   return (
-    <AnimatePresence initial={false} mode="wait">
-      <motion.main
-        className={styles.logo}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 1 }}
-      >
-        <Logo />
-        {currentComponent === "knights" && (
-          <DynamicKnights
-            onCharacterSelect={() => setIsCharacterSelected(true)}
+    <main className="p-10">
+      {!selectedSaint && (
+        <>
+          <h1 className="text-3xl font-bold mb-6">Caballeros de Bronce</h1>
+
+          <Bronze
+            saints={
+              saintsData.map((saint) => ({
+                ...saint,
+                life: saint.vida,
+              })) as Saint[]
+            }
+            onSelect={setSelectedSaint}
           />
-        )}
-        {currentComponent === "maps" && (
-          <DynamicMaps onBattleStart={() => setCurrentComponent("battle")} />
-        )}
-        {currentComponent === "battle" && <DynamicBattle />}
-        {currentComponent === "knights" && (
-          <button
-            className={styles.nextButton}
-            onClick={handleNext}
-            disabled={!isCharacterSelected}
-          >
-            Siguiente
-          </button>
-        )}
-      </motion.main>
-    </AnimatePresence>
+        </>
+      )}
+
+      {selectedSaint && (
+        <Battle saint={selectedSaint} onBack={() => setSelectedSaint(null)} />
+      )}
+    </main>
   );
-};
-
-export default Home;
-//   const [currentComponent, setCurrentComponent] = useState<"knights" | "maps">("knights");
-//   const [isCharacterSelected, setIsCharacterSelected] = useState(false);
-
-//   const handleNext = () => {
-//     if (isCharacterSelected) {
-//       setCurrentComponent("maps");
-//     } else {
-//       alert("Debes seleccionar un personaje antes de continuar.");
-//     }
-//   };
-
-//   return (
-//     <AnimatePresence initial={false} mode="wait">
-//       <motion.main
-//         className={styles.logo}
-//         initial={{ opacity: 0 }}
-//         animate={{ opacity: 1 }}
-//         exit={{ opacity: 0 }}
-//         transition={{ duration: 1 }}
-//       >
-//         <Logo />
-//         {currentComponent === "knights" && (
-//           <DynamicKnights onCharacterSelect={() => setIsCharacterSelected(true)} />
-//         )}
-//         {currentComponent === "maps" && <DynamicMaps />}
-//         {currentComponent === "knights" && (
-//           <button
-//             className={styles.nextButton}
-//             onClick={handleNext}
-//             disabled={!isCharacterSelected}
-//           >
-//             Siguiente
-//           </button>
-//         )}
-//       </motion.main>
-//     </AnimatePresence>
-//   );
-// };
-
-// export default Home;
+}
