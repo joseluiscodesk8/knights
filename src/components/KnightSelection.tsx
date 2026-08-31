@@ -10,9 +10,14 @@ import styles from "../styles/index.module.scss";
 interface KnightSelectionProps {
   knights: Knight[];
   onStart: (knight: Knight) => void;
+  onBack?: () => void;
 }
 
-export default function KnightSelection({ knights, onStart }: KnightSelectionProps) {
+export default function KnightSelection({
+  knights,
+  onStart,
+  onBack,
+}: KnightSelectionProps) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const selected = knights.find((knight) => knight.id === selectedId) ?? null;
 
@@ -52,6 +57,11 @@ export default function KnightSelection({ knights, onStart }: KnightSelectionPro
       >
         Empezar
       </button>
+      {onBack && (
+        <button className={styles.lobbyBackButton} onClick={onBack}>
+          ← Atrás
+        </button>
+      )}
     </section>
   );
 }

@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import BattleArena from "@/components/BattleArena";
 import GameMap from "@/components/GameMap";
 import KnightSelection from "@/components/KnightSelection";
+import ModeChoice from "@/components/multiplayer/ModeChoice";
+import MultiplayerGame from "@/components/multiplayer/MultiplayerGame";
 import { endRun, recordBattle, startRun } from "@/lib/api";
 import { resolveRound, rollAttack, RoundResult } from "@/lib/battle";
 import { useSession } from "@/hooks/useSession";
@@ -14,7 +16,14 @@ import { Knight } from "@/types/knights";
 
 import styles from "../styles/index.module.scss";
 
-type Phase = "selection" | "map" | "battle" | "victory" | "gameover";
+type Phase =
+  | "selection"
+  | "mode"
+  | "map"
+  | "battle"
+  | "victory"
+  | "gameover"
+  | "multiplayer";
 
 interface EndProfile {
   wins: number;
@@ -44,20 +53,39 @@ export default function Game() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
-  async function handleStart(knight: Knight) {
-    let startedRunId: string | null = null;
-    if (user) {
-      const run = await startRun(knight.id);
-      startedRunId = run?.runId ?? null;
-    }
-    setRunId(startedRunId);
+  async function selectKnight(knight: Knight) {
     setPlayer(knight);
     setPlayerHp(knight.vida);
     setGoldIndex(0);
     setLastRound(null);
     setEndProfile(null);
+    setMaze(null);
+    setPhase("mode");
+  }
+
+  async function handleSolo() {
+    if (!player) return;
+    let startedRunId: string | null = null;
+    if (user) {
+      const run = await startRun(player.id);
+      startedRunId = run?.runId ?? null;
+    }
+    setRunId(startedRunId);
+    setPlayerHp(player.vida);
+    setGoldIndex(0);
+    setLastRound(null);
+    setEndProfile(null);
     setMaze(createMaze());
     setPhase("map");
+  }
+
+  function handleMultiplayer() {
+    setPhase("multiplayer");
+  }
+
+  function handleBackToSelection() {
+    setPlayer(null);
+    setPhase("selection");
   }
 
   function handleCompleteMap() {
@@ -140,7 +168,28 @@ export default function Game() {
   }
 
   if (phase === "selection") {
-    return <KnightSelection knights={bronzeKnights} onStart={handleStart} />;
+    return <KnightSelection knights={bronzeKnights} onStart={selectKnight} />;
+  }
+
+  if (phase === "mode" && player) {
+    return (
+      <ModeChoice
+        knightName={player.name}
+        onSolo={handleSolo}
+        onMultiplayer={handleMultiplayer}
+        onBack={handleBackToSelection}
+      />
+    );
+  }
+
+  if (phase === "multiplayer" && player) {
+    return (
+      <MultiplayerGame
+        knight={player}
+        userName={user?.email?.split("@")[0] ?? undefined}
+        onExit={handleBackToSelection}
+      />
+    );
   }
 
   if (phase === "map" && maze && player) {
