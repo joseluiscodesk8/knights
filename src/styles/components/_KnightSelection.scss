@@ -1,0 +1,87 @@
+.selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 3rem 1.5rem;
+  min-height: 100vh;
+}
+
+.selectionTitle {
+  font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #4a2c0a;
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.4);
+  text-align: center;
+}
+
+.selectionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1100px;
+}
+
+.selectionOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  cursor: pointer;
+  text-align: center;
+  border: 3px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+}
+
+.selectionOptionActive {
+  border-color: #ffd700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+
+.selectionImage {
+  border-radius: 0.75rem;
+  object-fit: cover;
+}
+
+.selectionName {
+  font-size: 1.1rem;
+  color: #cd9b3c;
+}
+
+.selectionInput {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: #ffd700;
+  cursor: pointer;
+}
+
+.selectionButton {
+  padding: 0.9rem 2.5rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(to right, #ffd700, #daa520);
+  color: #3a2503;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

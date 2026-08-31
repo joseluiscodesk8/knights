@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Knights
 
-## Getting Started
+Juego web en equipo: eliges un caballero de bronce y debes recorrer un mapa en canvas para enfrentarte en batalla por turnos a los 12 caballeros de oro. Cada ataque es un botón; jugador y máquina sacan un número al azar (0-9), el mayor gana y la diferencia se resta a la vida del perdedor (el bronce además se cura la mitad redondeada del daño que inflige).
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router) + React + SCSS Modules
+- **Supabase** — PostgreSQL, Auth (email/password) y Row Level Security
+- **Vercel** — frontend + backend serverless (route handlers)
+
+## Características
+
+- Jugar sin cuenta (invitado, sin guardado) o registrarse para persistir progreso
+- Sesión mantenida con cookies (`@supabase/ssr` + middleware)
+- Guardado simple: perfil con victorias, derrotas y nivel
+- Cada campaña (`runs`) y cada pelea contra un gold (`battles`) quedan en la base de datos
+- Página `/stats` con RLS: cada usuario solo lee lo suyo
+
+Regla de nivel: `level = 1 + floor(victorias / 3)`.
+
+## Setup
+
+### 1. Variables de entorno
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Crea un proyecto en [supabase.com](https://supabase.com) (plan Free). Ve a
+`Settings -> API Keys` y pega en `.env.local`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### 2. Base de datos (migraciones)
 
-## Learn More
+Instala la CLI de Supabase y aplica las migraciones:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+brew install supabase/tap/supabase
+supabase login
+supabase link --project-ref TU_PROJECT_REF   # ref = subdominio del proyecto
+supabase db push
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Esto crea las tablas `profiles`, `runs` y `battles`, el trigger que crea el perfil al
+registrarse, y las políticas RLS. (Auth con email/password es gratis y viene activo
+por defecto; si quieres desactivar el correo de confirmación, búscalo en
+`Authentication -> Providers -> Email`.)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+### 3. Correr en local
 
-## Deploy on Vercel
+```bash
+npm install
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 4. Deploy a Vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```bash
+npm i -g vercel
+vercel
+```
+
+Al importar el proyecto a [vercel.com](https://vercel.com) añade las dos variables de
+entorno anteriores y cada push a `main` se desplegará automáticamente.
+
+## Estructura
+
+```
+src/
+  app/
+    page.tsx                    # juega (client)
+    auth/login/page.tsx         # entrar / registrarse
+    stats/page.tsx              # progreso (Server Component + RLS)
+    api/runs/route.ts           # POST crear campaña
+    api/runs/[id]/battles/route.ts
+    api/runs/[id]/end/route.ts
+  components/
+    Game.tsx                    # máquina de estados del juego
+    KnightSelection.tsx         # elegir caballero de bronce
+    GameMap.tsx                 # canvas + movimiento por botones
+    BattleArena.tsx             # batalla por turnos
+    Header.tsx                  # sesión / navegación
+  lib/
+    battle.ts                   # lógica del asalto (rolls + daño + curación)
+    maze.ts                     # mapa y esquinas O/X
+    knights.ts                  # extracción de datos de los JSON
+    api.ts                      # llamadas al backend
+    supabase/{client,server}.ts
+  data/
+    bronce.json                 # los 5 caballeros de bronce
+    gold.json                   # los 12 caballeros de oro
+supabase/migrations/            # esquema + RLS (versionado)
+```
+
+## Roadmap
+
+- [ ] Multiplayer P2P (WebRTC/PeerJS): hasta 5 bronce en una partida en equipo
+      contra los 12 gold, sin pasar datos por el servidor (misma WiFi o internet)
+- [ ] Mapa dinámico: laberinto generado al azar cada vez
+- [ ] Imágenes y sonidos reales en el canvas y en las batallas
+
+## Notas de seguridad / decisiones
+
+- Los knights viven en JSON estáticos (datos de juego, no de usuario).
+- La base de datos guarda solo datos de usuario y nunca se expone la key de servicio.
+- RLS por fila (`auth.uid() = owner_id`) protege todos los accesos, incluso desde el
+  cliente con la key `anon`.

@@ -1,0 +1,117 @@
+.statsWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.statsCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+}
+
+.statsTitle {
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ffd700;
+}
+
+.statsProfile {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.statsImage {
+  border-radius: 0.75rem;
+  object-fit: cover;
+}
+
+.statsImagePlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 3rem;
+  color: #ffd700;
+}
+
+.statsNumbers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  strong {
+    color: #ffd700;
+  }
+}
+
+.statsKnight {
+  font-size: 1.15rem;
+  color: #cd9b3c;
+}
+
+.statsEmpty {
+  opacity: 0.8;
+}
+
+.statsRuns {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.statsRun {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 0.9rem;
+}
+
+.statsRunKnight {
+  font-weight: 700;
+  color: #cd9b3c;
+}
+
+.statsRunStatus {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.statsStatuswon {
+  background: rgba(124, 216, 124, 0.2);
+  color: #7cd87c;
+}
+
+.statsStatuslost {
+  background: rgba(255, 123, 123, 0.2);
+  color: #ff7b7b;
+}
+
+.statsStatusactive {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+}
+
+.statsRunDate {
+  opacity: 0.65;
+  font-size: 0.8rem;
+}
