@@ -5,14 +5,12 @@ import type { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 
 export function useSession() {
+  const [configured] = useState(() => isSupabaseConfigured());
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(configured);
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
-      setLoading(false);
-      return;
-    }
+    if (!configured) return;
 
     const supabase = createClient();
     let mounted = true;
@@ -37,7 +35,7 @@ export function useSession() {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [configured]);
 
   return { user, loading };
 }

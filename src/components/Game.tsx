@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 
 import BattleArena from "@/components/BattleArena";
 import GameMap from "@/components/GameMap";
 import KnightSelection from "@/components/KnightSelection";
 import ModeChoice from "@/components/multiplayer/ModeChoice";
-import MultiplayerGame from "@/components/multiplayer/MultiplayerGame";
-import { endRun, recordBattle, startRun } from "@/lib/api";
+import { useHeaderVisibility } from "@/components/HeaderVisibility";
+import { endRun, recordBattle, startRun } from "@/lib/actions/game";
 import { resolveRound, rollAttack, RoundResult } from "@/lib/battle";
 import { useSession } from "@/hooks/useSession";
 import { getBronzeKnights, getGoldKnights } from "@/lib/knights";
@@ -15,6 +16,19 @@ import { createMaze, Maze } from "@/lib/maze";
 import { Knight } from "@/types/knights";
 
 import styles from "../styles/index.module.scss";
+
+const MultiplayerGame = dynamic(
+  () => import("@/components/multiplayer/MultiplayerGame"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className={styles.endScreen}>
+        <div className={styles.loadingSpinner} />
+        <p className={styles.loadingText}>Preparando multijugador…</p>
+      </div>
+    ),
+  }
+);
 
 type Phase =
   | "selection"
@@ -36,6 +50,7 @@ const goldKnights = getGoldKnights();
 
 export default function Game() {
   const { user } = useSession();
+  const { setHidden } = useHeaderVisibility();
   const [phase, setPhase] = useState<Phase>("selection");
   const [player, setPlayer] = useState<Knight | null>(null);
   const [playerHp, setPlayerHp] = useState(0);
@@ -47,11 +62,9 @@ export default function Game() {
   const [endProfile, setEndProfile] = useState<EndProfile | null>(null);
 
   useEffect(() => {
-    if (phase === "battle") {
-      setEnemyHp(goldKnights[goldIndex].vida);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
+    setHidden(phase !== "selection");
+    return () => setHidden(false);
+  }, [phase, setHidden]);
 
   async function selectKnight(knight: Knight) {
     setPlayer(knight);
@@ -89,6 +102,8 @@ export default function Game() {
   }
 
   function handleCompleteMap() {
+    if (!player) return;
+    setEnemyHp(goldKnights[goldIndex].vida);
     setLastRound(null);
     setPhase("battle");
   }
@@ -194,8 +209,10 @@ export default function Game() {
 
   if (phase === "map" && maze && player) {
     return (
-      <GameMap
+<GameMap
+        key={goldIndex}
         maze={maze}
+        avatar={player.background}
         label={`Ronda ${goldIndex + 1} de 12 · llega de la O a la X`}
         onComplete={handleCompleteMap}
       />

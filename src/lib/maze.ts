@@ -13,22 +13,8 @@ export interface Maze {
   goal: Position;
 }
 
-const STATIC_GRID: Cell[][] = [
-  [0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-  [0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0],
-  [0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0],
-  [0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
-  [0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0],
-  [0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
-  [0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0],
-  [0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0],
-  [0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-];
-
-const ROWS = STATIC_GRID.length;
-const COLS = STATIC_GRID[0].length;
+const ROWS = 11;
+const COLS = 11;
 
 const CORNERS: Position[] = [
   { row: 0, col: 0 },
@@ -44,14 +30,69 @@ function oppositeCorner(position: Position): Position {
   };
 }
 
+function carveCorner(grid: Cell[][], corner: Position): void {
+  grid[corner.row][corner.col] = 0;
+  grid[corner.row === 0 ? 1 : corner.row - 1][corner.col] = 0;
+}
+
 export function createMaze(): Maze {
+  const grid: Cell[][] = Array.from({ length: ROWS }, () =>
+    Array<Cell>(COLS).fill(1)
+  );
+
+  const rooms: Position[] = [];
+  for (let r = 1; r < ROWS - 1; r += 2) {
+    for (let c = 1; c < COLS - 1; c += 2) {
+      rooms.push({ row: r, col: c });
+      grid[r][c] = 0;
+    }
+  }
+
+  const visited = new Set<string>();
+  const key = (p: Position) => `${p.row},${p.col}`;
+  const startRoom = rooms[Math.floor(Math.random() * rooms.length)];
+  visited.add(key(startRoom));
+  const stack: Position[] = [startRoom];
+
+  const directions = [
+    { dr: -2, dc: 0 },
+    { dr: 2, dc: 0 },
+    { dr: 0, dc: -2 },
+    { dr: 0, dc: 2 },
+  ];
+
+  while (stack.length > 0) {
+    const current = stack[stack.length - 1];
+    const shuffled = directions.sort(() => Math.random() - 0.5);
+    let advanced = false;
+
+    for (const { dr, dc } of shuffled) {
+      const next = { row: current.row + dr, col: current.col + dc };
+      if (next.row < 1 || next.row > ROWS - 2) continue;
+      if (next.col < 1 || next.col > COLS - 2) continue;
+      if (visited.has(key(next))) continue;
+
+      grid[current.row + dr / 2][current.col + dc / 2] = 0;
+      visited.add(key(next));
+      stack.push(next);
+      advanced = true;
+      break;
+    }
+
+    if (!advanced) stack.pop();
+  }
+
   const start = CORNERS[Math.floor(Math.random() * CORNERS.length)];
+  const goal = oppositeCorner(start);
+  carveCorner(grid, start);
+  carveCorner(grid, goal);
+
   return {
-    grid: STATIC_GRID,
+    grid,
     rows: ROWS,
     cols: COLS,
     start,
-    goal: oppositeCorner(start),
+    goal,
   };
 }
 

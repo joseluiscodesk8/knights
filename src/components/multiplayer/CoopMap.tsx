@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { getBronzeKnights } from "@/lib/knights";
 import { Maze, Position } from "@/lib/maze";
 
 import styles from "../../styles/index.module.scss";
 
 const CELL = 44;
+
+const BACKGROUND_BY_NAME = new Map(
+  getBronzeKnights().map((knight) => [knight.name, knight.background])
+);
 
 interface CoopPlayer {
   id: string;
@@ -34,6 +39,34 @@ export default function CoopMap({
   onMove,
 }: CoopMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [images, setImages] = useState<Record<string, HTMLImageElement>>({});
+
+  useEffect(() => {
+    const sources = Array.from(
+      new Set(
+        players
+          .map((player) => BACKGROUND_BY_NAME.get(player.knightName))
+          .filter((src): src is string => Boolean(src))
+      )
+    );
+    if (sources.length === 0) return;
+
+    let cancelled = false;
+    const loaded: Record<string, HTMLImageElement> = {};
+
+    for (const src of sources) {
+      const img = new Image();
+      img.onload = () => {
+        loaded[src] = img;
+        if (!cancelled) setImages({ ...loaded });
+      };
+      img.src = src;
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [players]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -77,25 +110,41 @@ export default function CoopMap({
       const px = cx(player.pos.col);
       const py = cy(player.pos.row);
       const isMe = player.id === myId;
-      const radius = isMe ? CELL * 0.34 : CELL * 0.28;
+      const avatar = images[BACKGROUND_BY_NAME.get(player.knightName) ?? ""];
 
-      ctx.fillStyle = player.color;
-      ctx.beginPath();
-      ctx.arc(px, py, radius, 0, Math.PI * 2);
-      ctx.fill();
-
-      if (isMe) {
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 3;
+      if (avatar) {
+        const height = isMe ? CELL * 1.1 : CELL;
+        const width = height * (avatar.width / avatar.height);
+        if (isMe) {
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(px, py, height / 2 + 3, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.drawImage(avatar, px - width / 2, py - height / 2, width, height);
+        ctx.fillStyle = isMe ? "#fff" : "rgba(0,0,0,0.75)";
+        ctx.fillText(player.name, px, py - height / 2 - 4);
+      } else {
+        const radius = isMe ? CELL * 0.34 : CELL * 0.28;
+        ctx.fillStyle = player.color;
         ctx.beginPath();
-        ctx.arc(px, py, radius + 3, 0, Math.PI * 2);
-        ctx.stroke();
-      }
+        ctx.arc(px, py, radius, 0, Math.PI * 2);
+        ctx.fill();
 
-      ctx.fillStyle = isMe ? "#fff" : "rgba(0,0,0,0.75)";
-      ctx.fillText(player.name, px, py - radius - 6);
+        if (isMe) {
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(px, py, radius + 3, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = isMe ? "#fff" : "rgba(0,0,0,0.75)";
+        ctx.fillText(player.name, px, py - radius - 6);
+      }
     }
-  }, [maze, players, myId]);
+  }, [maze, players, myId, images]);
 
   return (
     <div className={styles.mapWrap}>
@@ -103,24 +152,18 @@ export default function CoopMap({
       <canvas ref={canvasRef} className={styles.mapCanvas} />
       {status && <p className={styles.lobbyStatus}>{status}</p>}
       <div className={styles.mapControls}>
-        <div className={styles.mapControlsRow}>
-          <button onClick={() => onMove(-1, 0)} aria-label="Arriba">
-            ↑
-          </button>
-        </div>
-        <div className={styles.mapControlsRow}>
-          <button onClick={() => onMove(0, -1)} aria-label="Izquierda">
-            ←
-          </button>
-          <button onClick={() => onMove(0, 1)} aria-label="Derecha">
-            →
-          </button>
-        </div>
-        <div className={styles.mapControlsRow}>
-          <button onClick={() => onMove(1, 0)} aria-label="Abajo">
-            ↓
-          </button>
-        </div>
+        <button onClick={() => onMove(0, -1)} aria-label="Izquierda">
+          ←
+        </button>
+        <button onClick={() => onMove(-1, 0)} aria-label="Arriba">
+          ↑
+        </button>
+        <button onClick={() => onMove(1, 0)} aria-label="Abajo">
+          ↓
+        </button>
+        <button onClick={() => onMove(0, 1)} aria-label="Derecha">
+          →
+        </button>
       </div>
     </div>
   );

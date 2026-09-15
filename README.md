@@ -80,18 +80,19 @@ entorno anteriores y cada push a `main` se desplegará automáticamente.
 ```
 src/
   app/
+    layout.tsx                  # metadata, OG, viewport, íconos
     page.tsx                    # juega (client)
-    auth/login/page.tsx         # entrar / registrarse
+    auth/login/page.tsx         # meta de login (server) + LoginForm (client)
     stats/page.tsx              # progreso (Server Component + RLS)
-    api/runs/route.ts           # POST crear campaña
-    api/runs/[id]/battles/route.ts
-    api/runs/[id]/end/route.ts
+    loading.tsx / error.tsx / not-found.tsx
+    manifest.ts / icon.svg      # PWA e icono
   components/
     Game.tsx                    # máquina de estados del juego (modo solitario/multi)
     ModeChoice.tsx              # elegir modo después de escoger caballero
     KnightSelection.tsx         # elegir caballero de bronce
     GameMap.tsx                 # canvas + movimiento por botones
     BattleArena.tsx             # batalla por turnos
+    LoginForm.tsx               # entrar / registrarse (client)
     Header.tsx                  # sesión / navegación
     multiplayer/
       MultiplayerGame.tsx       # orquestador host/guest (autoridad = host)
@@ -100,10 +101,8 @@ src/
       CoopBattle.tsx            # batalla conjunta por turnos
       MultiplayerEnd.tsx        # resultado de la partida en equipo
   lib/
-    battle.ts                   # lógica del asalto (rolls + daño + curación)
-    maze.ts                     # mapa y esquinas O/X
-    knights.ts                  # extracción de datos de los JSON
-    api.ts                      # llamadas al backend
+    actions/game.ts             # Server Actions: startRun, recordBattle, endRun
+    battle.ts / maze.ts / knights.ts / stats.ts
     supabase/{client,server}.ts
     multiplayer/
       types.ts                  # protocolo, estados y mensajes compartidos
@@ -113,6 +112,13 @@ src/
     gold.json                   # los 12 caballeros de oro
 supabase/migrations/            # esquema + RLS (versionado)
 ```
+
+## Calidad
+
+- `npm run lint` — ESLint (flat config, `eslint-config-next`)
+- `npm run typecheck` — `tsc --noEmit`
+- `npm test` — Vitest (lógica pura + componentes)
+- CI en GitHub Actions: lint, typecheck, tests y build en cada push a `master`.
 
 ## Roadmap
 

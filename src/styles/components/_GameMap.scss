@@ -23,14 +23,9 @@
 
 .mapControls {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-}
-
-.mapControlsRow {
-  display: flex;
-  gap: 0.25rem;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .mapControls button {

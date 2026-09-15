@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useSession } from "@/hooks/useSession";
+import { useHeaderVisibility } from "@/components/HeaderVisibility";
 import { createClient } from "@/lib/supabase/client";
 
 import styles from "../styles/index.module.scss";
 
 export default function Header() {
   const { user, loading } = useSession();
+  const { hidden } = useHeaderVisibility();
   const router = useRouter();
 
   async function handleSignOut() {
@@ -18,6 +20,8 @@ export default function Header() {
     router.refresh();
     router.push("/");
   }
+
+  if (hidden) return null;
 
   return (
     <header className={styles.header}>

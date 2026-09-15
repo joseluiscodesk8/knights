@@ -29,16 +29,33 @@ export default function BattleArena({
   lastRound,
   onAttack,
 }: BattleArenaProps) {
+  const hitSide: "player" | "enemy" | null =
+    !lastRound || lastRound.winner === "tie"
+      ? null
+      : lastRound.winner === "player"
+        ? "enemy"
+        : "player";
+
+  const roundKey = lastRound
+    ? `${lastRound.playerRoll}|${lastRound.enemyRoll}|${lastRound.winner}|${lastRound.damage}|${lastRound.heal}`
+    : "inicial";
+
   return (
     <section className={styles.arena}>
       <div className={styles.arenaGrid}>
-        <article className={styles.fighter}>
+        <article
+          key={hitSide === "player" ? `p-${roundKey}` : undefined}
+          className={`${styles.fighter} ${
+            hitSide === "player" ? styles.hit : ""
+          }`}
+        >
           <Image
             className={styles.fighterImage}
             src={player.image}
             alt={player.name}
             width={240}
             height={240}
+            priority
           />
           <h2 className={styles.fighterName}>{player.name}</h2>
           <div className={styles.hpBarWrap}>
@@ -61,41 +78,19 @@ export default function BattleArena({
           </div>
         </article>
 
-        <div className={styles.arenaTitle}>
-          <h1>Batalla</h1>
-          {lastRound && (
-            <div className={styles.roundLog}>
-              <p>
-                {lastRound.playerAttack} <strong>{lastRound.playerRoll}</strong>
-              </p>
-              <p>
-                {lastRound.enemyAttack} <strong>{lastRound.enemyRoll}</strong>
-              </p>
-              {lastRound.winner === "player" && (
-                <p className={styles.roundLogWin}>
-                  ¡Golpe tuyo! Enemigo −{lastRound.damage}, te recuperas +
-                  {lastRound.heal}
-                </p>
-              )}
-              {lastRound.winner === "enemy" && (
-                <p className={styles.roundLogLose}>
-                  Recibes −{lastRound.damage} de golpe
-                </p>
-              )}
-              {lastRound.winner === "tie" && (
-                <p className={styles.roundLogTie}>Empate, sin daño</p>
-              )}
-            </div>
-          )}
-        </div>
-
-        <article className={styles.fighter}>
+        <article
+          key={hitSide === "enemy" ? `e-${roundKey}` : undefined}
+          className={`${styles.fighter} ${styles.fighterEnemy} ${
+            hitSide === "enemy" ? styles.hit : ""
+          }`}
+        >
           <Image
             className={styles.fighterImage}
             src={enemy.image}
             alt={enemy.name}
             width={240}
             height={240}
+            priority
           />
           <h2 className={styles.fighterName}>{enemy.name}</h2>
           <div className={styles.hpBarWrap}>
@@ -105,21 +100,31 @@ export default function BattleArena({
             />
           </div>
           <span className={styles.hpValue}>{enemyHp}</span>
-          <div className={styles.enemyAttacks}>
-            {enemy.attacks.map((attack) => (
-              <button
-                key={attack}
-                className={`${styles.attackButton} ${styles.enemyAttackButton} ${
-                  lastRound?.enemyAttack === attack ? styles.enemyAttackUsed : ""
-                }`}
-                disabled
-              >
-                {attack}
-              </button>
-            ))}
-          </div>
         </article>
       </div>
+
+      {lastRound && (
+        <div className={styles.roundLog}>
+          <p>
+            Tú <strong>{lastRound.playerRoll}</strong> · Enemigo{" "}
+            <strong>{lastRound.enemyRoll}</strong>
+          </p>
+          {lastRound.winner === "player" && (
+            <p className={styles.roundLogWin}>
+              ¡Golpe tuyo! Enemigo −{lastRound.damage}, te recuperas +
+              {lastRound.heal}
+            </p>
+          )}
+          {lastRound.winner === "enemy" && (
+            <p className={styles.roundLogLose}>
+              Recibes −{lastRound.damage} de golpe
+            </p>
+          )}
+          {lastRound.winner === "tie" && (
+            <p className={styles.roundLogTie}>Empate, sin daño</p>
+          )}
+        </div>
+      )}
     </section>
   );
 }

@@ -498,6 +498,7 @@ export default function MultiplayerGame({
     setError(null);
     setMyId("");
     setScreen("choose");
+    onExit();
   }
 
   if (error) {
@@ -560,7 +561,7 @@ export default function MultiplayerGame({
       mode={screen}
       code={code}
       players={room?.players ?? []}
-      isHost={transportRef.current?.isHost ?? screen === "host"}
+      isHost={screen === "host"}
       connecting={connecting}
       error={error}
       onChooseHost={startHost}

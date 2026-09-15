@@ -35,3 +35,23 @@
   font-size: 0.9rem;
   opacity: 0.85;
 }
+
+.loadingSpinner {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 4px solid rgba(58, 37, 3, 0.2);
+  border-top-color: #3a2503;
+  animation: loadingSpin 0.8s linear infinite;
+}
+
+@keyframes loadingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingText {
+  color: #3a2503;
+  font-weight: 600;
+}

@@ -10,19 +10,23 @@ const CELL = 44;
 
 interface GameMapProps {
   maze: Maze;
+  avatar?: string;
   label?: string;
   onComplete: () => void;
 }
 
-export default function GameMap({ maze, label, onComplete }: GameMapProps) {
+export default function GameMap({ maze, avatar, label, onComplete }: GameMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [position, setPosition] = useState<Position>(maze.start);
   const [active, setActive] = useState(true);
+  const [avatarImg, setAvatarImg] = useState<HTMLImageElement | null>(null);
 
   useEffect(() => {
-    setPosition(maze.start);
-    setActive(true);
-  }, [maze]);
+    if (!avatar) return;
+    const img = new Image();
+    img.src = avatar;
+    img.onload = () => setAvatarImg(img);
+  }, [avatar]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -65,14 +69,21 @@ export default function GameMap({ maze, label, onComplete }: GameMapProps) {
 
     const px = cx(position.col);
     const py = cy(position.row);
-    ctx.fillStyle = "#b87333";
-    ctx.beginPath();
-    ctx.arc(px, py, CELL * 0.32, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }, [maze, position, active]);
+
+    if (avatarImg) {
+      const height = CELL;
+      const width = height * (avatarImg.width / avatarImg.height);
+      ctx.drawImage(avatarImg, px - width / 2, py - height / 2, width, height);
+    } else {
+      ctx.fillStyle = "#b87333";
+      ctx.beginPath();
+      ctx.arc(px, py, CELL * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }, [maze, position, active, avatarImg]);
 
   function move(dr: number, dc: number) {
     if (!active) return;
@@ -90,24 +101,18 @@ export default function GameMap({ maze, label, onComplete }: GameMapProps) {
       {label && <p className={styles.mapLabel}>{label}</p>}
       <canvas ref={canvasRef} className={styles.mapCanvas} />
       <div className={styles.mapControls}>
-        <div className={styles.mapControlsRow}>
-          <button onClick={() => move(-1, 0)} aria-label="Arriba">
-            ↑
-          </button>
-        </div>
-        <div className={styles.mapControlsRow}>
-          <button onClick={() => move(0, -1)} aria-label="Izquierda">
-            ←
-          </button>
-          <button onClick={() => move(0, 1)} aria-label="Derecha">
-            →
-          </button>
-        </div>
-        <div className={styles.mapControlsRow}>
-          <button onClick={() => move(1, 0)} aria-label="Abajo">
-            ↓
-          </button>
-        </div>
+        <button onClick={() => move(0, -1)} aria-label="Izquierda">
+          ←
+        </button>
+        <button onClick={() => move(-1, 0)} aria-label="Arriba">
+          ↑
+        </button>
+        <button onClick={() => move(1, 0)} aria-label="Abajo">
+          ↓
+        </button>
+        <button onClick={() => move(0, 1)} aria-label="Derecha">
+          →
+        </button>
       </div>
     </div>
   );

@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useState } from "react";
 
+import KnightCarousel from "@/components/KnightCarousel";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { Knight } from "@/types/knights";
 
 import styles from "../styles/index.module.scss";
@@ -18,8 +20,13 @@ export default function KnightSelection({
   onStart,
   onBack,
 }: KnightSelectionProps) {
+  const isMobile = useIsMobile();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const selected = knights.find((knight) => knight.id === selectedId) ?? null;
+
+  if (isMobile) {
+    return <KnightCarousel knights={knights} onStart={onStart} onBack={onBack} />;
+  }
 
   return (
     <section className={styles.selection}>
