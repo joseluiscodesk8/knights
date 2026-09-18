@@ -11,10 +11,27 @@ export interface Maze {
   cols: number;
   start: Position;
   goal: Position;
+  fakeGoal?: Position;
 }
 
 const ROWS = 11;
 const COLS = 11;
+
+const DIRECTIONS = [
+  { dr: -1, dc: 0 },
+  { dr: 1, dc: 0 },
+  { dr: 0, dc: -1 },
+  { dr: 0, dc: 1 },
+];
+
+function key(position: Position): string {
+  return `${position.row},${position.col}`;
+}
+
+function positionFromKey(value: string): Position {
+  const [row, col] = value.split(",").map(Number);
+  return { row, col };
+}
 
 const CORNERS: Position[] = [
   { row: 0, col: 0 },
@@ -49,7 +66,6 @@ export function createMaze(): Maze {
   }
 
   const visited = new Set<string>();
-  const key = (p: Position) => `${p.row},${p.col}`;
   const startRoom = rooms[Math.floor(Math.random() * rooms.length)];
   visited.add(key(startRoom));
   const stack: Position[] = [startRoom];
@@ -110,4 +126,61 @@ export function isWalkable(maze: Maze, position: Position): boolean {
 
 export function reachGoal(maze: Maze, position: Position): boolean {
   return position.row === maze.goal.row && position.col === maze.goal.col;
+}
+
+export function samePosition(a: Position, b: Position): boolean {
+  return a.row === b.row && a.col === b.col;
+}
+
+export function isGoal(maze: Maze, position: Position): boolean {
+  return samePosition(maze.goal, position);
+}
+
+export function isFakeGoal(maze: Maze, position: Position): boolean {
+  return !!maze.fakeGoal && samePosition(maze.fakeGoal, position);
+}
+
+function shortestPath(maze: Maze): Position[] {
+  const previous = new Map<string, string>();
+  const visited = new Set<string>([key(maze.start)]);
+  const queue: Position[] = [maze.start];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (samePosition(current, maze.goal)) break;
+    for (const { dr, dc } of DIRECTIONS) {
+      const next = { row: current.row + dr, col: current.col + dc };
+      if (!isWalkable(maze, next) || visited.has(key(next))) continue;
+      visited.add(key(next));
+      previous.set(key(next), key(current));
+      queue.push(next);
+    }
+  }
+
+  const path: Position[] = [];
+  let cursor: string | undefined = key(maze.goal);
+  while (cursor) {
+    path.push(positionFromKey(cursor));
+    cursor = previous.get(cursor);
+  }
+  return path;
+}
+
+export function createGeminiMaze(): Maze {
+  const maze = createMaze();
+  const onPath = new Set(shortestPath(maze).map(key));
+  const candidates: Position[] = [];
+
+  for (let row = 1; row < ROWS - 1; row += 2) {
+    for (let col = 1; col < COLS - 1; col += 2) {
+      const position = { row, col };
+      if (onPath.has(key(position))) continue;
+      if (samePosition(position, maze.start)) continue;
+      candidates.push(position);
+    }
+  }
+
+  const fakeGoal =
+    candidates[Math.floor(Math.random() * candidates.length)] ?? maze.goal;
+  return { ...maze, fakeGoal };
 }

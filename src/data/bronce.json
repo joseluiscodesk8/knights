@@ -4,6 +4,7 @@
       "name": "Pegasus Seiya",
       "image": "/seiya.png",
       "background": "/seiya-Background.png",
+      "upgradeImage": "/seiya2.png",
       "attacks": ["Pegasus Meteor Fist", "Pegasus Rolling Crush"],
       "vida": 10
     },
@@ -12,6 +13,7 @@
       "name": "Dragon Shiryu",
       "image": "/shiryu.png",
       "background": "/shiryu-Background.png",
+      "upgradeImage": "/shiryu2.png",
       "attacks": ["Rozan Shoryuha", "Rozan Rising Dragon"],
       "vida": 10
     },
@@ -20,6 +22,7 @@
       "name": "Cygnus Hyoga",
       "image": "/hyoga.png",
       "background": "/hyoga-Background.png",
+      "upgradeImage": "/hyoga2.png",
       "attacks": ["Aurora Execution", "Diamond Dust"],
       "vida": 10
     },

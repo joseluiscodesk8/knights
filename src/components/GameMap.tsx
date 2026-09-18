@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { isWalkable, Maze, Position, reachGoal } from "@/lib/maze";
+import { isFakeGoal, isGoal, isWalkable, Maze, Position } from "@/lib/maze";
 
 import styles from "../styles/index.module.scss";
 
@@ -12,7 +12,7 @@ interface GameMapProps {
   maze: Maze;
   avatar?: string;
   label?: string;
-  onComplete: () => void;
+  onComplete: (position: Position) => void;
 }
 
 export default function GameMap({ maze, avatar, label, onComplete }: GameMapProps) {
@@ -65,6 +65,18 @@ export default function GameMap({ maze, avatar, label, onComplete }: GameMapProp
     ctx.fillStyle = "#fff";
     ctx.fillText("X", cx(maze.goal.col), cy(maze.goal.row));
 
+    if (maze.fakeGoal) {
+      ctx.fillStyle = "rgba(198, 40, 40, 0.55)";
+      ctx.fillRect(
+        maze.fakeGoal.col * CELL,
+        maze.fakeGoal.row * CELL,
+        CELL,
+        CELL
+      );
+      ctx.fillStyle = "#fff";
+      ctx.fillText("X", cx(maze.fakeGoal.col), cy(maze.fakeGoal.row));
+    }
+
     if (!active) return;
 
     const px = cx(position.col);
@@ -90,9 +102,9 @@ export default function GameMap({ maze, avatar, label, onComplete }: GameMapProp
     const next = { row: position.row + dr, col: position.col + dc };
     if (!isWalkable(maze, next)) return;
     setPosition(next);
-    if (reachGoal(maze, next)) {
+    if (isGoal(maze, next) || isFakeGoal(maze, next)) {
       setActive(false);
-      onComplete();
+      onComplete(next);
     }
   }
 

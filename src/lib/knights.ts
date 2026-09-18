@@ -31,3 +31,7 @@ export function getBronzeKnightById(id: number): Knight | undefined {
 export function getGoldKnightById(id: number): Knight | undefined {
   return data.gold.find((knight) => knight.id === id);
 }
+
+export function getKnightImage(knight: Knight, kills: number): string {
+  return knight.upgradeImage && kills > 0 ? knight.upgradeImage : knight.image;
+}

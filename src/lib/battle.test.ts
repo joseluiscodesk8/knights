@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveRound, rollAttack } from "@/lib/battle";
+import { createDodgeChallenge, resolveRound, rollAttack } from "@/lib/battle";
 
 describe("rollAttack", () => {
   it("devuelve un número entre 0 y 9", () => {
@@ -45,5 +45,18 @@ describe("resolveRound", () => {
     expect(result.winner).toBe("player");
     expect(result.damage).toBe(5);
     expect(result.heal).toBe(3);
+  });
+});
+
+describe("createDodgeChallenge", () => {
+  it("tantos rayos de daño como puntos sacó el dorado", () => {
+    expect(createDodgeChallenge(1).count).toBe(1);
+    expect(createDodgeChallenge(7).count).toBe(7);
+    expect(createDodgeChallenge(9).count).toBe(9);
+  });
+
+  it("nunca lanza menos de 1 ni más de 9 rayos", () => {
+    expect(createDodgeChallenge(-2).count).toBe(1);
+    expect(createDodgeChallenge(25).count).toBe(9);
   });
 });

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { motion } from "motion/react";
 import { useState } from "react";
 
 import KnightCarousel from "@/components/KnightCarousel";
@@ -32,9 +33,19 @@ export default function KnightSelection({
     <section className={styles.selection}>
       <h1 className={styles.selectionTitle}>Selecciona tu caballero de bronce</h1>
       <div className={styles.selectionGrid}>
-        {knights.map((knight) => (
-          <label
+        {knights.map((knight, index) => (
+          <motion.label
             key={knight.id}
+            initial={{ opacity: 0, y: 26 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              delay: index * 0.05,
+              type: "spring",
+              stiffness: 260,
+              damping: 22,
+            }}
+            whileHover={{ y: -8, scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             className={`${styles.selectionOption} ${
               selectedId === knight.id ? styles.selectionOptionActive : ""
             }`}
@@ -54,7 +65,7 @@ export default function KnightSelection({
               checked={selectedId === knight.id}
               onChange={() => setSelectedId(knight.id)}
             />
-          </label>
+          </motion.label>
         ))}
       </div>
       <button

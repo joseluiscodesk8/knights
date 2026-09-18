@@ -2,6 +2,18 @@ export function rollAttack(): number {
   return Math.floor(Math.random() * 10);
 }
 
+export function randomInt(max: number): number {
+  return Math.floor(Math.random() * max);
+}
+
+export interface DodgeChallenge {
+  count: number;
+}
+
+export function createDodgeChallenge(roll: number): DodgeChallenge {
+  return { count: Math.max(1, Math.min(9, roll)) };
+}
+
 export interface RoundResult {
   playerRoll: number;
   enemyRoll: number;

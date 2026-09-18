@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { createMaze, isWalkable, reachGoal, Position } from "@/lib/maze";
+import {
+  createGeminiMaze,
+  createMaze,
+  isFakeGoal,
+  isGoal,
+  isWalkable,
+  reachGoal,
+  Position,
+} from "@/lib/maze";
 
 describe("createMaze", () => {
   it("crea un laberinto 11x11", () => {
@@ -76,5 +84,24 @@ describe("reachGoal", () => {
     const maze = createMaze();
     expect(reachGoal(maze, maze.goal)).toBe(true);
     expect(reachGoal(maze, maze.start)).toBe(false);
+  });
+});
+
+describe("createGeminiMaze", () => {
+  it("agrega una segunda X transitable y distinta de la salida y la meta", () => {
+    for (let i = 0; i < 20; i++) {
+      const maze = createGeminiMaze();
+      expect(maze.fakeGoal).toBeDefined();
+      expect(isWalkable(maze, maze.fakeGoal!)).toBe(true);
+      expect(maze.fakeGoal).not.toEqual(maze.start);
+      expect(maze.fakeGoal).not.toEqual(maze.goal);
+    }
+  });
+
+  it("la meta real sigue siendo la original y la falsa se detecta aparte", () => {
+    const maze = createGeminiMaze();
+    expect(isGoal(maze, maze.goal)).toBe(true);
+    expect(isFakeGoal(maze, maze.fakeGoal!)).toBe(true);
+    expect(isFakeGoal(maze, maze.start)).toBe(false);
   });
 });

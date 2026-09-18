@@ -6,4 +6,5 @@ export interface Knight {
   attacks: string[]
   vida: number
   audioAttacks?: string[]
+  upgradeImage?: string
 }
