@@ -7,4 +7,5 @@ export interface Knight {
   vida: number
   audioAttacks?: string[]
   upgradeImage?: string
+  rayStyle?: string
 }

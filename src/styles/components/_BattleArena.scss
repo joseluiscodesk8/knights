@@ -40,6 +40,13 @@
   top: 2%;
   left: 50%;
   transform: translateX(-50%);
+  transition: opacity 120ms ease, transform 120ms ease, filter 120ms ease;
+}
+
+.goldTeleport {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-18px) scale(0.5);
+  filter: brightness(2.2);
 }
 
 .fighterBronze {
@@ -198,12 +205,12 @@
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0),
-    rgba(255, 255, 255, 0.95),
-    #cfe9ff
+    var(--beamColor, #cfe9ff),
+    var(--beamColor, #cfe9ff)
   );
   box-shadow:
-    0 0 12px 2px rgba(255, 255, 255, 0.9),
-    0 0 32px 8px rgba(190, 230, 255, 0.55);
+    0 0 12px 2px var(--beamGlow, rgba(255, 255, 255, 0.9)),
+    0 0 32px 8px var(--beamGlowSoft, rgba(190, 230, 255, 0.55));
   transform-origin: top center;
   z-index: 2;
   pointer-events: none;
@@ -235,6 +242,129 @@
     opacity: 0;
     transform: scale(1.9);
   }
+}
+
+.impactStar {
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  background: radial-gradient(
+    circle,
+    #fff7dc,
+    rgba(255, 217, 138, 0.9) 40%,
+    rgba(255, 200, 90, 0) 70%
+  );
+  box-shadow:
+    0 0 16px 4px rgba(255, 220, 130, 0.85),
+    0 0 40px 12px rgba(255, 200, 90, 0.35);
+}
+
+.beamHorn {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0),
+    var(--beamColor, #ffe08a) 55%,
+    #fff
+  );
+}
+
+.beamShadow {
+  clip-path: polygon(
+    45% 0, 55% 5%, 40% 10%, 60% 15%, 42% 20%, 58% 26%,
+    38% 32%, 62% 38%, 40% 45%, 58% 52%, 36% 60%, 60% 68%,
+    42% 76%, 56% 84%, 40% 92%, 60% 100%
+  );
+  filter: drop-shadow(0 0 5px var(--beamGlow, rgba(150, 80, 255, 0.85)));
+}
+
+.beamPlasma {
+  clip-path: polygon(
+    60% 0, 48% 4%, 68% 9%, 42% 13%, 66% 18%, 44% 24%,
+    64% 30%, 40% 36%, 66% 43%, 46% 50%, 62% 57%, 40% 63%,
+    64% 70%, 44% 77%, 62% 84%, 40% 91%, 58% 97%, 50% 100%
+  );
+  filter: brightness(1.35) drop-shadow(0 0 8px var(--beamGlow, rgba(140, 190, 255, 0.95)));
+  box-shadow:
+    0 0 14px 4px var(--beamGlow, rgba(160, 210, 255, 1)),
+    0 0 36px 10px var(--beamGlowSoft, rgba(140, 180, 255, 0.6));
+}
+
+.beamSpectral {
+  filter: blur(1px);
+  border-radius: 0;
+  box-shadow: 0 0 10px 2px var(--beamGlowSoft, rgba(100, 255, 160, 0.3));
+}
+
+.beamAtomic {
+  filter: brightness(1.2);
+  box-shadow:
+    0 0 18px 4px var(--beamGlow, rgba(255, 255, 255, 0.95)),
+    0 0 44px 12px var(--beamGlowSoft, rgba(200, 220, 255, 0.5));
+}
+
+.beamFlame {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 40%,
+    var(--beamColor, #9dffae) 50%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  filter: drop-shadow(0 0 6px var(--beamGlow, rgba(110, 235, 140, 0.9)));
+}
+
+.beamNeedle {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0),
+    var(--beamColor, #ff5f74) 65%,
+    var(--beamColor, #ff5f74)
+  );
+  border-radius: 0;
+}
+
+.beamArrow::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  transform: translateX(-50%) rotate(45deg);
+  background: var(--beamColor, #ffe08a);
+  box-shadow: 0 0 10px 3px var(--beamGlow, rgba(255, 220, 140, 0.95));
+}
+
+.beamBlade {
+  clip-path: polygon(42% 0, 58% 0, 64% 26%, 76% 100%, 24% 100%, 36% 26%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0),
+    var(--beamColor, #ffe9b0) 45%,
+    var(--beamColor, #ffe9b0)
+  );
+  box-shadow:
+    0 0 16px 3px var(--beamGlow, rgba(255, 230, 160, 0.95)),
+    0 0 40px 10px var(--beamGlowSoft, rgba(255, 205, 110, 0.4));
+}
+
+.beamSheet {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 38%,
+    var(--beamColor, #bceaff) 50%,
+    rgba(255, 255, 255, 0) 62%
+  );
+  filter: blur(0.4px);
+}
+
+.beamPetal {
+  filter: blur(2px);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0),
+    var(--beamColor, #ff9ad5) 35%,
+    var(--beamColor, #ff9ad5)
+  );
 }
 
 .playerAttacks {

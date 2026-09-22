@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { animate, useSpring } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { DodgeChallenge, randomInt, RoundResult } from "@/lib/battle";
 import { Knight } from "@/types/knights";
@@ -43,9 +43,127 @@ const HIT_RANGE = 46;
 const BRONZE_MIN = 6;
 const BRONZE_MAX = 78;
 const RAY_SPEED = 190;
-const CADENCE = 255;
+const FAKE_RAY_SPEED = 95;
+const CADENCE = 50;
 const BARRAGE_START = 350;
-const BARRAGE_END = 11300;
+const BARRAGE_DURATION = 10000;
+const BARRAGE_END = BARRAGE_START + BARRAGE_DURATION;
+
+interface RayStyle {
+  color: string;
+  glow: string;
+  glowSoft: string;
+  width: number;
+  impactClass?: string;
+  patternClass?: string;
+  speedFactor?: number;
+}
+
+const RAY_STYLES: Record<string, RayStyle> = {
+  stardust: {
+    color: "#ffd98a",
+    glow: "rgba(255, 215, 120, 0.9)",
+    glowSoft: "rgba(255, 200, 90, 0.35)",
+    width: 6,
+    impactClass: "impactStar",
+    speedFactor: 1,
+  },
+  horn: {
+    color: "#ffe08a",
+    glow: "rgba(255, 190, 80, 0.95)",
+    glowSoft: "rgba(255, 160, 60, 0.4)",
+    width: 12,
+    patternClass: "beamHorn",
+    speedFactor: 0.9,
+  },
+  shadow: {
+    color: "#c86bff",
+    glow: "rgba(150, 80, 255, 0.85)",
+    glowSoft: "rgba(120, 60, 255, 0.3)",
+    width: 8,
+    patternClass: "beamShadow",
+    speedFactor: 1.05,
+  },
+  ghost: {
+    color: "#a8ffcf",
+    glow: "rgba(140, 255, 190, 0.7)",
+    glowSoft: "rgba(100, 255, 160, 0.3)",
+    width: 8,
+    patternClass: "beamSpectral",
+    speedFactor: 1.1,
+  },
+  lightning: {
+    color: "#eaf4ff",
+    glow: "rgba(160, 210, 255, 1)",
+    glowSoft: "rgba(140, 180, 255, 0.6)",
+    width: 7,
+    patternClass: "beamPlasma",
+    speedFactor: 0.85,
+  },
+  thunder: {
+    color: "#ffffff",
+    glow: "rgba(255, 255, 255, 0.95)",
+    glowSoft: "rgba(200, 220, 255, 0.5)",
+    width: 14,
+    patternClass: "beamAtomic",
+    speedFactor: 1,
+  },
+  dragon: {
+    color: "#9dffae",
+    glow: "rgba(110, 235, 140, 0.9)",
+    glowSoft: "rgba(80, 220, 120, 0.35)",
+    width: 9,
+    patternClass: "beamFlame",
+    speedFactor: 0.95,
+  },
+  needle: {
+    color: "#ff5f74",
+    glow: "rgba(255, 80, 110, 0.9)",
+    glowSoft: "rgba(220, 60, 90, 0.4)",
+    width: 3,
+    patternClass: "beamNeedle",
+    speedFactor: 0.9,
+  },
+  arrow: {
+    color: "#ffe08a",
+    glow: "rgba(255, 220, 140, 0.95)",
+    glowSoft: "rgba(255, 200, 100, 0.4)",
+    width: 5,
+    patternClass: "beamArrow",
+    speedFactor: 0.8,
+  },
+  blade: {
+    color: "#ffe9b0",
+    glow: "rgba(255, 230, 160, 0.95)",
+    glowSoft: "rgba(255, 205, 110, 0.4)",
+    width: 16,
+    patternClass: "beamBlade",
+    speedFactor: 1,
+  },
+  ice: {
+    color: "#bceaff",
+    glow: "rgba(150, 220, 255, 0.8)",
+    glowSoft: "rgba(120, 200, 255, 0.3)",
+    width: 9,
+    patternClass: "beamSheet",
+    speedFactor: 1.05,
+  },
+  rose: {
+    color: "#ff9ad5",
+    glow: "rgba(255, 150, 210, 0.8)",
+    glowSoft: "rgba(255, 120, 190, 0.3)",
+    width: 8,
+    patternClass: "beamPetal",
+    speedFactor: 1.5,
+  },
+};
+
+const DEFAULT_RAY_STYLE: RayStyle = {
+  color: "#cfe9ff",
+  glow: "rgba(190, 230, 255, 0.55)",
+  glowSoft: "rgba(190, 230, 255, 0.3)",
+  width: 7,
+};
 
 function hpPercent(hp: number, base: number): number {
   const max = Math.max(hp, base);
@@ -125,6 +243,29 @@ export default function BattleArena({
   });
   const [flashes, setFlashes] = useState<Impact[]>([]);
   const [bronzeHit, setBronzeHit] = useState(false);
+  const [teleportOn, setTeleportOn] = useState(false);
+
+  useEffect(() => {
+    if (phase !== "dodge") return;
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const cycle = () => {
+      timer = setTimeout(() => {
+        if (!alive) return;
+        setTeleportOn(true);
+        timer = setTimeout(() => {
+          if (!alive) return;
+          setTeleportOn(false);
+          cycle();
+        }, 150 + randomInt(160));
+      }, 500 + randomInt(1200));
+    };
+    cycle();
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [phase]);
 
   useEffect(() => {
     bronzeXRef.current = bronzeX;
@@ -141,12 +282,16 @@ export default function BattleArena({
     ? `${lastRound.playerRoll}|${lastRound.enemyRoll}|${lastRound.winner}|${lastRound.damage}|${lastRound.heal}`
     : "inicial";
 
-  function spawnBeams(challenge: DodgeChallenge) {
+  const spawnBeams = useCallback(
+    (challenge: DodgeChallenge) => {
     const stage = stageRef.current;
     const gold = goldRef.current;
     const bronze = bronzeRef.current;
     const bronzeImg = bronzeImgRef.current;
     if (!stage || !gold || !bronze || !bronzeImg) return;
+
+    const style = RAY_STYLES[enemy.rayStyle ?? ""] ?? DEFAULT_RAY_STYLE;
+    const speedFactor = style.speedFactor ?? 1;
 
     const stageRect = stage.getBoundingClientRect();
     const goldRect = gold.getBoundingClientRect();
@@ -165,8 +310,24 @@ export default function BattleArena({
     const beams: Beam[] = [];
     let id = 0;
 
-    const total =
-      Math.floor((BARRAGE_END - BARRAGE_START) / CADENCE) + 1;
+    let launchAt = BARRAGE_START;
+    while (launchAt <= BARRAGE_END) {
+      beams.push({
+        id: id++,
+        kind: "fake",
+        columnX: randomInt(stageRect.width),
+        launchAt,
+        speed: Math.round(
+          (FAKE_RAY_SPEED + randomInt(41)) * speedFactor
+        ),
+        damage: 0,
+        triggered: false,
+        aimed: true,
+      });
+      launchAt += CADENCE + randomInt(41);
+    }
+
+    const total = beams.length;
     const realSlots = [0];
     const remaining = challenge.count - 1;
     for (let k = 0; k < remaining; k++) {
@@ -176,26 +337,21 @@ export default function BattleArena({
     }
     realSlots.sort((a, b) => a - b);
 
-    let next = BARRAGE_START;
-
-    for (let i = 0; i < total; i++) {
-      const isReal = realSlots.includes(i);
-      beams.push({
-        id: id++,
-        kind: isReal ? "real" : "fake",
-        columnX: isReal ? 0 : randomInt(stageRect.width),
-        launchAt: next,
-        speed: RAY_SPEED + randomInt(31),
-        damage: isReal ? 1 : 0,
-        triggered: false,
-        aimed: false,
-      });
-      next += CADENCE + randomInt(41);
+    for (const slot of realSlots) {
+      const beam = beams[slot];
+      if (!beam) continue;
+      beam.kind = "real";
+      beam.columnX = 0;
+      beam.speed = RAY_SPEED + randomInt(31);
+      beam.damage = 1;
+      beam.aimed = false;
     }
 
     setBeams(beams);
     setPhase("dodge");
-  }
+  },
+    [enemy]
+  );
 
   useEffect(() => {
     if (!lastRound) return;
@@ -218,7 +374,7 @@ export default function BattleArena({
       clearTimeout(flashTimer);
       if (spawnTimer) clearTimeout(spawnTimer);
     };
-  }, [lastRound, dodge]);
+  }, [lastRound, dodge, spawnBeams]);
 
   useEffect(() => {
     if (phase !== "dodge") return;
@@ -354,6 +510,7 @@ export default function BattleArena({
   }
 
   const busy = !!dodge || phase === "dodge" || !!floats;
+  const rayStyle = RAY_STYLES[enemy.rayStyle ?? ""] ?? DEFAULT_RAY_STYLE;
 
   return (
     <section className={styles.arena}>
@@ -363,7 +520,7 @@ export default function BattleArena({
           key={goldHit ? `e-${roundKey}` : undefined}
           className={`${styles.fighter} ${styles.fighterGold} ${
             goldHit ? styles.hit : ""
-          }`}
+          } ${phase === "dodge" && teleportOn ? styles.goldTeleport : ""}`}
         >
           <div
             className={`${styles.fighterFigure} ${
@@ -431,13 +588,22 @@ export default function BattleArena({
               if (el) beamElsRef.current.set(beam.id, el);
               else beamElsRef.current.delete(beam.id);
             }}
-            className={styles.beam}
+            className={[
+              styles.beam,
+              rayStyle.patternClass ? styles[rayStyle.patternClass] : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             style={{
               left: beam.columnX,
               top: beamRows.topStart,
               height: beamRows.height,
               transform: "scaleY(0)",
               opacity: 0,
+              width: rayStyle.width,
+              ["--beamColor" as string]: rayStyle.color,
+              ["--beamGlow" as string]: rayStyle.glow,
+              ["--beamGlowSoft" as string]: rayStyle.glowSoft,
             }}
           />
         ))}
@@ -445,7 +611,12 @@ export default function BattleArena({
         {flashes.map((impact) => (
           <div
             key={impact.id}
-            className={styles.beamImpact}
+            className={[
+              styles.beamImpact,
+              rayStyle.impactClass ? styles[rayStyle.impactClass] : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             style={{ left: impact.x, top: impact.y }}
           />
         ))}

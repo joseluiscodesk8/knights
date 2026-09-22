@@ -1,7 +1,7 @@
 import type { Maze, Position } from "@/lib/maze";
 import type { RoundResult } from "@/lib/battle";
 
-export type MpPhase = "lobby" | "map" | "battle" | "end";
+export type MpPhase = "lobby" | "play" | "end";
 
 export const MAX_PLAYERS = 5;
 export const ROOM_PREFIX = "knights-mp-";
@@ -34,17 +34,23 @@ export interface RoomPlayer {
   maxHp: number;
   pos: Position;
   alive: boolean;
+  goldIndex: number;
+  inDuel: boolean;
+}
+
+export interface DuelState {
+  memberIds: string[];
+  goldHp: number;
+  goldMaxHp: number;
+  turn: number;
+  lastRound: RollEvent | null;
 }
 
 export interface RoomState {
   phase: MpPhase;
   players: RoomPlayer[];
-  maze: Maze | null;
-  goldIndex: number;
-  goldHp: number;
-  goldMaxHp: number;
-  turn: number;
-  lastRound: RollEvent | null;
+  mazes: Record<number, Maze>;
+  duels: Record<number, DuelState>;
   message?: string;
   result?: "victory" | "gameover";
 }

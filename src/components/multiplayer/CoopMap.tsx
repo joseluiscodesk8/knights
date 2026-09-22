@@ -105,6 +105,27 @@ export default function CoopMap({
     ctx.fillStyle = "#fff";
     ctx.fillText("X", cx(maze.goal.col), cy(maze.goal.row));
 
+    if (maze.fakeGoal) {
+      ctx.strokeStyle = "rgba(156, 39, 176, 0.8)";
+      ctx.lineWidth = 3;
+      ctx.setLineDash([5, 4]);
+      ctx.strokeRect(
+        maze.fakeGoal.col * CELL - 1,
+        maze.fakeGoal.row * CELL - 1,
+        CELL + 2,
+        CELL + 2
+      );
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(156, 39, 176, 0.55)";
+      ctx.fillRect(maze.fakeGoal.col * CELL, maze.fakeGoal.row * CELL, CELL, CELL);
+      ctx.fillStyle = "#fff";
+      ctx.fillText(
+        "X?",
+        cx(maze.fakeGoal.col),
+        cy(maze.fakeGoal.row)
+      );
+    }
+
     ctx.font = "bold 11px sans-serif";
     for (const player of players) {
       const px = cx(player.pos.col);

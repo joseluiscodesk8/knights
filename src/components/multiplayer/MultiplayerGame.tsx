@@ -6,9 +6,15 @@ import CoopBattle from "@/components/multiplayer/CoopBattle";
 import CoopMap from "@/components/multiplayer/CoopMap";
 import LobbyView from "@/components/multiplayer/LobbyView";
 import MultiplayerEnd from "@/components/multiplayer/MultiplayerEnd";
-import { resolveRound, rollAttack } from "@/lib/battle";
+import {
+  cloneState,
+  disconnectPlayer,
+  goldCount,
+  movePlayer,
+  resolveAttack,
+  startPlayState,
+} from "@/lib/multiplayer/gameplay";
 import { getBronzeKnightById, getGoldKnights } from "@/lib/knights";
-import { createMaze, isWalkable, reachGoal } from "@/lib/maze";
 import {
   MAX_PLAYERS,
   PLAYER_COLORS,
@@ -78,6 +84,8 @@ export default function MultiplayerGame({
       maxHp: knight.vida,
       pos: { row: 0, col: 0 },
       alive: true,
+      goldIndex: 0,
+      inDuel: false,
     };
   }
 
@@ -87,111 +95,6 @@ export default function MultiplayerGame({
       transportRef.current = null;
     };
   }, []);
-
-  const startBattle = useCallback(
-    (from: RoomState) => {
-      const gold = goldKnights[from.goldIndex] ?? goldKnights[0];
-      const next: RoomState = {
-        ...from,
-        phase: "battle",
-        maze: from.maze,
-        goldIndex: from.goldIndex,
-        goldHp: gold.vida,
-        goldMaxHp: gold.vida,
-        turn: from.players.findIndex((player) => player.alive),
-        lastRound: null,
-        result: undefined,
-        message: `¡Todo el equipo llegó! El Gold ${gold.name} os espera.`,
-      };
-      applyRoom(next);
-      broadcastRoom();
-    },
-    [applyRoom, broadcastRoom]
-  );
-
-  const resolveAttack = useCallback(
-    (actorIndex: number, attackIndex: number) => {
-      const current = roomRef.current;
-      const transport = transportRef.current;
-      if (!current || current.phase !== "battle" || !transport) return;
-      const next: RoomState = {
-        ...current,
-        players: current.players.map((player) => ({ ...player })),
-      };
-      const player = next.players[actorIndex];
-      if (!player.alive || next.turn !== actorIndex) return;
-      const bronze = getBronzeKnightById(player.knightId);
-      if (!bronze) return;
-      const gold = goldKnights[next.goldIndex] ?? goldKnights[0];
-      const playerAttack = bronze.attacks[attackIndex] ?? bronze.attacks[0];
-      const enemyAttack =
-        gold.attacks[Math.floor(Math.random() * gold.attacks.length)];
-      const result = resolveRound(
-        rollAttack(),
-        rollAttack(),
-        playerAttack,
-        enemyAttack
-      );
-
-      let goldHp = next.goldHp;
-      if (result.winner === "player") {
-        goldHp -= result.damage;
-        player.hp = Math.min(player.maxHp, player.hp + result.heal);
-      } else if (result.winner === "enemy") {
-        player.hp = Math.max(0, player.hp - result.damage);
-      }
-      player.alive = player.hp > 0;
-      next.goldHp = goldHp;
-      next.lastRound = { ...result, actorName: player.name };
-
-      if (goldHp <= 0) {
-        if (next.goldIndex >= goldKnights.length - 1) {
-          next.phase = "end";
-          next.result = "victory";
-          next.turn = -1;
-          applyRoom(next);
-          broadcastRoom();
-          return;
-        }
-        const nextGold = goldKnights[next.goldIndex + 1];
-        const maze = createMaze();
-        next.phase = "map";
-        next.maze = maze;
-        next.goldIndex += 1;
-        next.goldHp = 0;
-        next.goldMaxHp = 0;
-        next.turn = 0;
-        next.lastRound = null;
-        next.players = next.players.map((player) => ({
-          ...player,
-          pos: player.alive ? { ...maze.start } : { ...maze.goal },
-        }));
-        next.message = `El Gold ${gold.name} ha caído. ¡Todos a la X para el Gold ${nextGold.name}!`;
-        applyRoom(next);
-        broadcastRoom();
-        return;
-      }
-
-      if (next.players.every((p) => !p.alive)) {
-        next.phase = "end";
-        next.result = "gameover";
-        next.turn = -1;
-        applyRoom(next);
-        broadcastRoom();
-        return;
-      }
-
-      let turn = (next.turn + 1) % next.players.length;
-      for (let i = 0; i < next.players.length; i++) {
-        if (next.players[turn].alive) break;
-        turn = (turn + 1) % next.players.length;
-      }
-      next.turn = turn;
-      applyRoom(next);
-      broadcastRoom();
-    },
-    [applyRoom, broadcastRoom]
-  );
 
   const handleGuestData = useCallback(
     (peerId: string, message: MpMessage) => {
@@ -231,6 +134,8 @@ export default function MultiplayerGame({
               maxHp: guestKnight?.vida ?? knight.vida,
               pos: { row: 0, col: 0 },
               alive: true,
+              goldIndex: 0,
+              inDuel: false,
             },
           ],
         };
@@ -240,45 +145,23 @@ export default function MultiplayerGame({
       }
 
       if (message.type === "move") {
-        if (!current || current.phase !== "map" || !current.maze) return;
-        const index = current.players.findIndex(
-          (player) => player.id === peerId
-        );
-        if (index === -1 || !current.players[index].alive) return;
-        const me = current.players[index];
-        const intent = message.payload;
-        if (
-          Math.abs(intent.row - me.pos.row) +
-            Math.abs(intent.col - me.pos.col) !==
-          1
-        ) {
-          return;
-        }
-        if (!isWalkable(current.maze, intent)) return;
-        const next: RoomState = {
-          ...current,
-          players: current.players.map((player) =>
-            player.id === peerId ? { ...player, pos: intent } : player
-          ),
-        };
-        applyRoom(next);
+        if (!current || current.phase !== "play") return;
+        applyRoom(movePlayer(cloneState(current), peerId, message.payload));
         broadcastRoom();
-        if (next.players.every((player) => reachGoal(next.maze!, player.pos))) {
-          startBattle(next);
-        }
         return;
       }
 
       if (message.type === "attack") {
-        if (!current || current.phase !== "battle") return;
+        if (!current || current.phase !== "play") return;
         const index = current.players.findIndex(
           (player) => player.id === peerId
         );
         if (index === -1) return;
-        resolveAttack(index, message.payload.attackIndex);
+        applyRoom(resolveAttack(cloneState(current), index, message.payload.attackIndex));
+        broadcastRoom();
       }
     },
-    [applyRoom, broadcastRoom, startBattle, resolveAttack, knight]
+    [applyRoom, broadcastRoom, knight]
   );
 
   const handleGuestDisconnect = useCallback(
@@ -286,7 +169,9 @@ export default function MultiplayerGame({
       const current = roomRef.current;
       const transport = transportRef.current;
       if (!current || !transport) return;
-      const index = current.players.findIndex((player) => player.id === peerId);
+      const index = current.players.findIndex(
+        (player) => player.id === peerId
+      );
       if (index === -1) return;
 
       if (current.phase === "lobby") {
@@ -298,52 +183,10 @@ export default function MultiplayerGame({
         return;
       }
 
-      const next: RoomState = {
-        ...current,
-        players: current.players.map((player) => ({ ...player })),
-      };
-      const guest = next.players[index];
-      guest.alive = false;
-      guest.name = `${guest.name} (desconectado)`;
-      next.message = `${guest.name} se desconectó`;
-
-      if (next.phase === "map" && next.maze) {
-        guest.pos = next.maze.goal;
-        applyRoom(next);
-        broadcastRoom();
-        if (
-          next.players.every(
-            (player) => !player.alive || reachGoal(next.maze!, player.pos)
-          )
-        ) {
-          startBattle(next);
-        }
-        return;
-      }
-
-      if (next.phase === "battle") {
-        if (next.players.every((player) => !player.alive)) {
-          next.phase = "end";
-          next.result = "gameover";
-          next.turn = -1;
-          applyRoom(next);
-          broadcastRoom();
-          return;
-        }
-        if (next.turn === index) {
-          let turn = (index + 1) % next.players.length;
-          for (let i = 0; i < next.players.length; i++) {
-            if (next.players[turn].alive) break;
-            turn = (turn + 1) % next.players.length;
-          }
-          next.turn = turn;
-        }
-      }
-
-      applyRoom(next);
+      applyRoom(disconnectPlayer(cloneState(current), peerId));
       broadcastRoom();
     },
-    [applyRoom, broadcastRoom, startBattle]
+    [applyRoom, broadcastRoom]
   );
 
   const handleGuestDataIn = useCallback(
@@ -372,12 +215,8 @@ export default function MultiplayerGame({
       applyRoom({
         phase: "lobby",
         players: [buildLocalPlayer(transport.peerId)],
-        maze: null,
-        goldIndex: 0,
-        goldHp: 0,
-        goldMaxHp: 0,
-        turn: 0,
-        lastRound: null,
+        mazes: {},
+        duels: {},
         message: "Comparte el código con tu equipo",
       });
     } catch (cause) {
@@ -424,51 +263,20 @@ export default function MultiplayerGame({
     if (!current || current.phase !== "lobby" || current.players.length < 2) {
       return;
     }
-    const maze = createMaze();
-    const next: RoomState = {
-      ...current,
-      phase: "map",
-      maze,
-      players: current.players.map((player) => ({
-        ...player,
-        pos: { ...maze.start },
-      })),
-      goldIndex: 0,
-      goldHp: 0,
-      goldMaxHp: 0,
-      turn: 0,
-      lastRound: null,
-      result: undefined,
-      message: "Salid de la O y llegad juntos a la X para la batalla!",
-    };
-    applyRoom(next);
+    applyRoom(startPlayState(cloneState(current)));
     broadcastRoom();
   }
 
   function handleLocalMove(dr: number, dc: number) {
     const current = roomRef.current;
     const transport = transportRef.current;
-    if (!current || !current.maze || current.phase !== "map" || !transport) {
-      return;
-    }
-    const index = current.players.findIndex((player) => player.id === myId);
-    if (index === -1 || !current.players[index].alive) return;
-    const me = current.players[index];
+    if (!current || current.phase !== "play" || !transport) return;
+    const me = current.players.find((player) => player.id === myId);
+    if (!me || !me.alive || me.inDuel) return;
     const intent = { row: me.pos.row + dr, col: me.pos.col + dc };
-    if (!isWalkable(current.maze, intent)) return;
-
     if (transport.isHost) {
-      const next: RoomState = {
-        ...current,
-        players: current.players.map((player) =>
-          player.id === myId ? { ...player, pos: intent } : player
-        ),
-      };
-      applyRoom(next);
+      applyRoom(movePlayer(cloneState(current), myId, intent));
       broadcastRoom();
-      if (next.players.every((player) => reachGoal(next.maze!, player.pos))) {
-        startBattle(next);
-      }
     } else {
       transport.sendToEveryone({ type: "move", payload: intent });
     }
@@ -477,13 +285,12 @@ export default function MultiplayerGame({
   function handleLocalAttack(attackIndex: number) {
     const current = roomRef.current;
     const transport = transportRef.current;
-    if (!current || current.phase !== "battle" || !transport) return;
+    if (!current || current.phase !== "play" || !transport) return;
     const index = current.players.findIndex((player) => player.id === myId);
-    if (index === -1 || index !== current.turn || !current.players[index].alive) {
-      return;
-    }
+    if (index === -1 || !current.players[index].alive) return;
     if (transport.isHost) {
-      resolveAttack(index, attackIndex);
+      applyRoom(resolveAttack(cloneState(current), index, attackIndex));
+      broadcastRoom();
     } else {
       transport.sendToEveryone({ type: "attack", payload: { attackIndex } });
     }
@@ -512,44 +319,75 @@ export default function MultiplayerGame({
     );
   }
 
-  if (room?.phase === "map" && room.maze) {
-    return (
-      <CoopMap
-        maze={room.maze}
-        players={room.players.map((player, index) => ({
-          ...player,
-          color: PLAYER_COLORS[index % PLAYER_COLORS.length],
-        }))}
-        myId={myId}
-        label={room.message}
-        status={undefined}
-        onMove={handleLocalMove}
-      />
-    );
-  }
+  if (room?.phase === "play") {
+    const my = room.players.find((player) => player.id === myId);
+    const viewers = room.players.filter((player) => player.alive);
+    const view =
+      my && my.alive
+        ? my
+        : [...viewers].sort(
+            (a, b) =>
+              b.goldIndex - a.goldIndex ||
+              Number(b.inDuel) - Number(a.inDuel)
+          )[0];
 
-  if (room?.phase === "battle") {
-    const gold = goldKnights[room.goldIndex] ?? goldKnights[0];
-    return (
-      <CoopBattle
-        goldKnight={gold}
-        goldIndex={room.goldIndex}
-        goldHp={room.goldHp}
-        players={room.players}
-        myIndex={room.players.findIndex((player) => player.id === myId)}
-        turn={room.turn}
-        lastRound={room.lastRound}
-        status={room.message}
-        onAttack={handleLocalAttack}
-      />
-    );
+    if (view) {
+      const gold = goldKnights[view.goldIndex] ?? goldKnights[0];
+      const duel = room.duels[view.goldIndex];
+      if (view.inDuel && duel) {
+        const members = duel.memberIds
+          .map((id) => room.players.find((player) => player.id === id))
+          .filter(
+            (player): player is RoomPlayer => Boolean(player)
+          );
+        return (
+          <CoopBattle
+            goldKnight={gold}
+            goldIndex={view.goldIndex}
+            goldHp={duel.goldHp}
+            players={members}
+            myIndex={members.findIndex((player) => player.id === myId)}
+            turn={duel.turn}
+            lastRound={duel.lastRound}
+            status={room.message}
+            onAttack={handleLocalAttack}
+          />
+        );
+      }
+      const maze = room.mazes[view.goldIndex];
+      if (maze) {
+        const walkers = room.players.filter(
+          (player) => player.goldIndex === view.goldIndex && !player.inDuel
+        );
+        return (
+          <CoopMap
+            maze={maze}
+            players={walkers.map((player, index) => ({
+              id: player.id,
+              name: player.name,
+              knightName: player.knightName,
+              pos: player.pos,
+              color: PLAYER_COLORS[index % PLAYER_COLORS.length],
+            }))}
+            myId={myId}
+            label={room.message}
+            onMove={handleLocalMove}
+          />
+        );
+      }
+    }
   }
 
   if (room?.phase === "end") {
+    const progress = Math.max(
+      ...room.players.map((player) =>
+        player.alive ? player.goldIndex : Math.min(player.goldIndex, goldCount() - 1)
+      )
+    );
     return (
       <MultiplayerEnd
         result={room.result ?? "gameover"}
-        goldIndex={room.goldIndex}
+        goldIndex={progress}
         playerName={displayName}
         onExit={handleBack}
       />

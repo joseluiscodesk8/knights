@@ -35,6 +35,9 @@ export default function CoopBattle({
   status,
   onAttack,
 }: CoopBattleProps) {
+  const back = players.filter((_, index) => index !== myIndex);
+  const nBack = back.length;
+
   return (
     <section className={styles.multiBattleWrap}>
       <div className={styles.multiBattleHeader}>
@@ -92,63 +95,101 @@ export default function CoopBattle({
 
       {status && <p className={styles.multiTurnInfo}>{status}</p>}
 
-      <div className={styles.multiRoster}>
-        {players.map((player, index) => {
-          const isMe = index === myIndex;
-          const myTurnNow = index === turn && isMe && player.alive;
+      <div className={styles.multiStage}>
+        {back.map((player, backIndex) => {
+          const originalIndex = backIndex < myIndex ? backIndex : backIndex + 1;
+          const spread = nBack > 1 ? 16 + (backIndex / (nBack - 1)) * 68 : 50;
+          const fanTilt = nBack > 1 ? (backIndex - (nBack - 1) / 2) * 5 : 0;
           return (
             <article
               key={player.id}
-              className={`${styles.multiFighter} ${
+              className={`${styles.multiFighter} ${styles.multiFighterBack} ${
                 !player.alive ? styles.multiDead : ""
-              } ${index === turn ? styles.multiTurn : ""}`}
+              } ${originalIndex === turn ? styles.multiTurn : ""}`}
+              style={{
+                left: `${spread}%`,
+                transform: `translateX(-50%) rotate(${fanTilt}deg)`,
+                zIndex: backIndex + 1,
+              }}
             >
               <Image
                 className={styles.fighterImage}
                 src={player.knightImage}
                 alt={player.knightName}
-                width={120}
-                height={120}
+                width={90}
+                height={90}
               />
               <h3 className={styles.multiFighterName}>
                 {player.name}
-                {isMe ? " ✱" : ""}
+                {originalIndex === myIndex ? " ✱" : ""}
               </h3>
               <div className={styles.hpBarWrap}>
                 <div
                   className={styles.hpBarFill}
-                  style={{ width: `${hpPercent(player.hp, player.maxHp)}%` }}
+                  style={{
+                    width: `${hpPercent(player.hp, player.maxHp)}%`,
+                  }}
                 />
               </div>
               <span className={styles.hpValue}>{player.hp}</span>
-
-              <span className={styles.multiBadge}>
-                {!player.alive
-                  ? "Caído"
-                  : index === turn
-                    ? isMe
-                      ? "👉 Es tu turno"
-                      : "Atacando…"
-                    : "En guardia"}
-              </span>
-
-              {isMe && player.alive && (
-                <div className={styles.playerAttacks}>
-                  {player.attacks.map((attack, attackIndex) => (
-                    <button
-                      key={attack}
-                      className={styles.attackButton}
-                      disabled={!myTurnNow}
-                      onClick={() => onAttack(attackIndex)}
-                    >
-                      {attack}
-                    </button>
-                  ))}
-                </div>
-              )}
             </article>
           );
         })}
+
+        {players[myIndex] && (
+          <article
+            key={players[myIndex].id}
+            className={`${styles.multiFighter} ${styles.multiFighterFront} ${
+              !players[myIndex].alive ? styles.multiDead : ""
+            } ${myIndex === turn ? styles.multiTurn : ""}`}
+          >
+            <Image
+              className={styles.fighterImage}
+              src={players[myIndex].knightImage}
+              alt={players[myIndex].knightName}
+              width={120}
+              height={120}
+            />
+            <h3 className={styles.multiFighterName}>
+              {players[myIndex].name} ✱
+            </h3>
+            <div className={styles.hpBarWrap}>
+              <div
+                className={styles.hpBarFill}
+                style={{
+                  width: `${hpPercent(
+                    players[myIndex].hp,
+                    players[myIndex].maxHp
+                  )}%`,
+                }}
+              />
+            </div>
+            <span className={styles.hpValue}>{players[myIndex].hp}</span>
+
+            <span className={styles.multiBadge}>
+              {!players[myIndex].alive
+                ? "Caído"
+                : myIndex === turn
+                  ? "👉 Es tu turno"
+                  : "En guardia"}
+            </span>
+
+            {players[myIndex].alive && (
+              <div className={styles.playerAttacks}>
+                {players[myIndex].attacks.map((attack, attackIndex) => (
+                  <button
+                    key={attack}
+                    className={styles.attackButton}
+                    disabled={myIndex !== turn}
+                    onClick={() => onAttack(attackIndex)}
+                  >
+                    {attack}
+                  </button>
+                ))}
+              </div>
+            )}
+          </article>
+        )}
       </div>
     </section>
   );

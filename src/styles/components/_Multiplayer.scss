@@ -191,12 +191,37 @@
   text-align: center;
 }
 
-.multiRoster {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1rem;
+.multiStage {
+  position: relative;
   width: 100%;
-  max-width: 1100px;
+  max-width: 640px;
+  height: min(72vw, 380px);
+}
+
+.multiFighterBack,
+.multiFighterFront {
+  position: absolute;
+  bottom: 0;
+  transform-origin: bottom center;
+}
+
+.multiFighterBack {
+  width: clamp(96px, 24vw, 150px);
+  padding: 0.75rem;
+  translate: 0 12px;
+  filter: brightness(0.72) saturate(0.85);
+  cursor: default;
+}
+
+.multiFighterFront {
+  left: 50%;
+  bottom: -10px;
+  width: clamp(150px, 34vw, 190px);
+  padding: 1.1rem;
+  z-index: 5;
+  border-color: #ffd700;
+  box-shadow: 0 0 26px rgba(255, 215, 0, 0.55);
+  transform: translateX(-50%) scale(1.05);
 }
 
 .multiFighter {
