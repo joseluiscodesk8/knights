@@ -198,6 +198,7 @@ export default function MultiplayerGame({
   );
 
   async function startHost() {
+    setScreen("host");
     setConnecting(true);
     setError(null);
     const generated = generateRoomCode();
@@ -231,6 +232,7 @@ export default function MultiplayerGame({
 
   async function startJoin(codeInput: string) {
     const clean = codeInput.trim().toUpperCase();
+    setScreen("join");
     setConnecting(true);
     setError(null);
     setCode(clean);
