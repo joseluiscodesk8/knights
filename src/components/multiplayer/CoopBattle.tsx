@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 
+import { HpRing } from "@/components/BattleArena";
 import type { RoomPlayer, RollEvent } from "@/lib/multiplayer/types";
 import { Knight } from "@/types/knights";
 
@@ -19,9 +20,9 @@ interface CoopBattleProps {
   onAttack: (attackIndex: number) => void;
 }
 
-function hpPercent(hp: number, base: number): number {
-  const max = Math.max(hp, base);
-  return Math.max(0, Math.min(100, (hp / max) * 100));
+function backLeft(index: number, total: number): number {
+  if (total <= 1) return 50;
+  return 8 + (index * 84) / (total - 1);
 }
 
 export default function CoopBattle({
@@ -35,33 +36,12 @@ export default function CoopBattle({
   status,
   onAttack,
 }: CoopBattleProps) {
-  const back = players.filter((_, index) => index !== myIndex);
-  const nBack = back.length;
+  const backs = players.filter((_, index) => index !== myIndex);
+  const mine = players[myIndex];
 
   return (
-    <section className={styles.multiBattleWrap}>
+    <section className={styles.arena}>
       <div className={styles.multiBattleHeader}>
-        <div className={styles.multiBattleGold}>
-          <Image
-            className={styles.fighterImage}
-            src={goldKnight.image}
-            alt={goldKnight.name}
-            width={160}
-            height={160}
-          />
-          <h2 className={styles.fighterName}>{goldKnight.name}</h2>
-          <span className={styles.multiGoldCount}>
-            Gold {goldIndex + 1} de 12
-          </span>
-          <div className={styles.hpBarWrap}>
-            <div
-              className={`${styles.hpBarFill} ${styles.hpBarFillEnemy}`}
-              style={{ width: `${hpPercent(goldHp, goldKnight.vida)}%` }}
-            />
-          </div>
-          <span className={styles.hpValue}>{goldHp}</span>
-        </div>
-
         <div className={styles.roundLog}>
           {lastRound ? (
             <>
@@ -93,104 +73,104 @@ export default function CoopBattle({
         </div>
       </div>
 
+      <span className={styles.multiGoldCount}>
+        Gold {goldIndex + 1} de 12
+      </span>
       {status && <p className={styles.multiTurnInfo}>{status}</p>}
 
-      <div className={styles.multiStage}>
-        {back.map((player, backIndex) => {
-          const originalIndex = backIndex < myIndex ? backIndex : backIndex + 1;
-          const spread = nBack > 1 ? 16 + (backIndex / (nBack - 1)) * 68 : 50;
-          const fanTilt = nBack > 1 ? (backIndex - (nBack - 1) / 2) * 5 : 0;
+      <div className={styles.arenaStage}>
+        <article
+          className={`${styles.fighter} ${styles.fighterGold} ${
+            turn === -1 ? styles.multiGoldWait : ""
+          }`}
+        >
+          <div className={styles.fighterFigure}>
+            <Image
+              className={styles.fighterImage}
+              src={goldKnight.image}
+              alt={goldKnight.name}
+              width={200}
+              height={200}
+              priority
+            />
+            <HpRing hp={goldHp} base={goldKnight.vida} />
+          </div>
+          <h2 className={styles.fighterName}>{goldKnight.name}</h2>
+        </article>
+
+        {backs.map((member, backIndex) => {
+          const originalIndex =
+            backIndex < myIndex ? backIndex : backIndex + 1;
+          const isTurn = originalIndex === turn;
           return (
             <article
-              key={player.id}
-              className={`${styles.multiFighter} ${styles.multiFighterBack} ${
-                !player.alive ? styles.multiDead : ""
-              } ${originalIndex === turn ? styles.multiTurn : ""}`}
+              key={member.id}
+              className={`${styles.fighter} ${styles.fighterBronze} ${
+                styles.multiBack
+              } ${!member.alive ? styles.multiDead : ""} ${
+                isTurn ? styles.multiTurnGlow : ""
+              }`}
               style={{
-                left: `${spread}%`,
-                transform: `translateX(-50%) rotate(${fanTilt}deg)`,
-                zIndex: backIndex + 1,
+                left: `${backLeft(backIndex, backs.length)}%`,
+                zIndex: isTurn ? 3 : 2,
               }}
             >
-              <Image
-                className={styles.fighterImage}
-                src={player.knightImage}
-                alt={player.knightName}
-                width={90}
-                height={90}
-              />
-              <h3 className={styles.multiFighterName}>
-                {player.name}
-                {originalIndex === myIndex ? " ✱" : ""}
-              </h3>
-              <div className={styles.hpBarWrap}>
-                <div
-                  className={styles.hpBarFill}
-                  style={{
-                    width: `${hpPercent(player.hp, player.maxHp)}%`,
-                  }}
+              <h2 className={styles.fighterName}>
+                {member.name}
+                {isTurn ? " 👉" : ""}
+              </h2>
+              <div className={styles.fighterFigure}>
+                <Image
+                  className={styles.fighterImage}
+                  src={member.knightImage}
+                  alt={member.knightName}
+                  width={120}
+                  height={120}
                 />
+                <HpRing hp={member.hp} base={member.maxHp} />
               </div>
-              <span className={styles.hpValue}>{player.hp}</span>
             </article>
           );
         })}
 
-        {players[myIndex] && (
+        {mine && (
           <article
-            key={players[myIndex].id}
-            className={`${styles.multiFighter} ${styles.multiFighterFront} ${
-              !players[myIndex].alive ? styles.multiDead : ""
-            } ${myIndex === turn ? styles.multiTurn : ""}`}
+            className={`${styles.fighter} ${styles.fighterBronze} ${
+              styles.multiMine
+            } ${!mine.alive ? styles.multiDead : ""} ${
+              myIndex === turn ? styles.multiTurnGlow : ""
+            }`}
+            style={{ left: "50%", zIndex: 10 }}
           >
-            <Image
-              className={styles.fighterImage}
-              src={players[myIndex].knightImage}
-              alt={players[myIndex].knightName}
-              width={120}
-              height={120}
-            />
-            <h3 className={styles.multiFighterName}>
-              {players[myIndex].name} ✱
-            </h3>
-            <div className={styles.hpBarWrap}>
-              <div
-                className={styles.hpBarFill}
-                style={{
-                  width: `${hpPercent(
-                    players[myIndex].hp,
-                    players[myIndex].maxHp
-                  )}%`,
-                }}
+            <h2 className={styles.fighterName}>{mine.name} ✱</h2>
+            <div className={styles.fighterFigure}>
+              <Image
+                className={styles.fighterImage}
+                src={mine.knightImage}
+                alt={mine.knightName}
+                width={120}
+                height={120}
               />
+              <HpRing hp={mine.hp} base={mine.maxHp} />
             </div>
-            <span className={styles.hpValue}>{players[myIndex].hp}</span>
-
-            <span className={styles.multiBadge}>
-              {!players[myIndex].alive
-                ? "Caído"
-                : myIndex === turn
-                  ? "👉 Es tu turno"
-                  : "En guardia"}
-            </span>
-
-            {players[myIndex].alive && (
-              <div className={styles.playerAttacks}>
-                {players[myIndex].attacks.map((attack, attackIndex) => (
-                  <button
-                    key={attack}
-                    className={styles.attackButton}
-                    disabled={myIndex !== turn}
-                    onClick={() => onAttack(attackIndex)}
-                  >
-                    {attack}
-                  </button>
-                ))}
-              </div>
-            )}
           </article>
         )}
       </div>
+
+      {mine?.alive && (
+        <div className={styles.playerAttacks}>
+          {mine.attacks.map((attack, attackIndex) => (
+            <button
+              key={attack}
+              className={styles.attackButton}
+              disabled={myIndex !== turn}
+              onClick={() => onAttack(attackIndex)}
+            >
+              {attack}
+            </button>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

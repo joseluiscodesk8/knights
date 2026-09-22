@@ -191,37 +191,27 @@
   text-align: center;
 }
 
-.multiStage {
-  position: relative;
-  width: 100%;
-  max-width: 640px;
-  height: min(72vw, 380px);
+.multiMine {
+  scale: 1.04;
 }
 
-.multiFighterBack,
-.multiFighterFront {
-  position: absolute;
-  bottom: 0;
-  transform-origin: bottom center;
-}
-
-.multiFighterBack {
-  width: clamp(96px, 24vw, 150px);
-  padding: 0.75rem;
+.multiBack {
   translate: 0 12px;
-  filter: brightness(0.72) saturate(0.85);
-  cursor: default;
+  scale: 0.82;
+  filter: brightness(0.7) saturate(0.85);
+  opacity: 0.9;
 }
 
-.multiFighterFront {
-  left: 50%;
-  bottom: -10px;
-  width: clamp(150px, 34vw, 190px);
-  padding: 1.1rem;
-  z-index: 5;
-  border-color: #ffd700;
-  box-shadow: 0 0 26px rgba(255, 215, 0, 0.55);
-  transform: translateX(-50%) scale(1.05);
+.multiTurnGlow .fighterImage {
+  filter: drop-shadow(0 0 14px rgba(255, 215, 0, 0.85));
+}
+
+.multiTurnGlow .fighterName {
+  color: #ffd700;
+}
+
+.multiGoldWait .fighterFigure {
+  animation: goldSwing 0.7s linear infinite;
 }
 
 .multiFighter {

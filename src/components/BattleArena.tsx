@@ -176,7 +176,7 @@ function ringColor(pct: number): string {
   return "#e34c4c";
 }
 
-function HpRing({ hp, base }: { hp: number; base: number }) {
+export function HpRing({ hp, base }: { hp: number; base: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const fill = useSpring(hpPercent(hp, base), {
     stiffness: 90,
