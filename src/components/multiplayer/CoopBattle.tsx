@@ -13,16 +13,15 @@ import styles from "../../styles/index.module.scss";
 
 interface CoopBattleProps {
   goldKnight: Knight;
-  goldIndex: number;
   goldHp: number;
   players: RoomPlayer[];
   myIndex: number;
   turn: number;
   lastRound: RollEvent | null;
-  status?: string;
   onAttack: (attackIndex: number) => void;
   onDodgeHit: () => void;
   onDodgeEnd: () => void;
+  onDodgeMove: (x: number) => void;
 }
 
 interface Beam {
@@ -60,16 +59,15 @@ function backZ(index: number): number {
 
 export default function CoopBattle({
   goldKnight,
-  goldIndex,
   goldHp,
   players,
   myIndex,
   turn,
   lastRound,
-  status,
   onAttack,
   onDodgeHit,
   onDodgeEnd,
+  onDodgeMove,
 }: CoopBattleProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const goldRef = useRef<HTMLDivElement>(null);
@@ -80,6 +78,7 @@ export default function CoopBattle({
   const dragRef = useRef<{ startX: number; startPct: number } | null>(null);
   const flashIdRef = useRef(0);
   const rowsRef = useRef({ topStart: 0, floor: 0, height: 0, hitT: 1 });
+  const lastDodgeSendRef = useRef(0);
 
   const [myX, setMyX] = useState(BRONZE_MIN);
   const [phase, setPhase] = useState<"idle" | "dodge">("idle");
@@ -109,62 +108,65 @@ export default function CoopBattle({
 
   useEffect(() => {
     if (dodgeCount == null) return;
-    const stage = stageRef.current;
-    const gold = goldRef.current;
-    const me = myRef.current;
-    if (!stage || !gold || !me) return;
+    const timer = setTimeout(() => {
+      const stage = stageRef.current;
+      const gold = goldRef.current;
+      const me = myRef.current;
+      if (!stage || !gold || !me) return;
 
-    const stageRect = stage.getBoundingClientRect();
-    const goldRect = gold.getBoundingClientRect();
-    const meRect = me.getBoundingClientRect();
+      const stageRect = stage.getBoundingClientRect();
+      const goldRect = gold.getBoundingClientRect();
+      const meRect = me.getBoundingClientRect();
 
-    const rows = {
-      topStart: goldRect.top - stageRect.top - 6,
-      floor: meRect.top + meRect.height / 2 - stageRect.top,
-      height: stageRect.height - (goldRect.top - stageRect.top - 6) + 80,
-      hitT: 1,
-    };
-    rows.hitT = (rows.floor - rows.topStart) / rows.height;
-    rowsRef.current = rows;
-    setBeamRows(rows);
+      const rows = {
+        topStart: goldRect.top - stageRect.top - 6,
+        floor: meRect.top + meRect.height / 2 - stageRect.top,
+        height: stageRect.height - (goldRect.top - stageRect.top - 6) + 80,
+        hitT: 1,
+      };
+      rows.hitT = (rows.floor - rows.topStart) / rows.height;
+      rowsRef.current = rows;
+      setBeamRows(rows);
 
-    const barrage: Beam[] = [];
-    let id = 0;
+      const barrage: Beam[] = [];
+      let id = 0;
 
-    const duration = Math.min(9000, 2200 + dodgeCount * 380);
-    const end = BARRAGE_START + duration;
-    let launchAt = BARRAGE_START;
-    while (launchAt <= end) {
-      barrage.push({
-        id: id++,
-        kind: "fake",
-        columnX: randomInt(stageRect.width),
-        launchAt,
-        speed: FAKE_RAY_SPEED + randomInt(41),
-        damage: 0,
-        triggered: false,
-        aimed: true,
-      });
-      const step = CADENCE + randomInt(41);
-      launchAt += Math.round(step / Math.max(1, dodgeCount / 8));
-    }
+      const duration = Math.min(9000, 2200 + dodgeCount * 380);
+      const end = BARRAGE_START + duration;
+      let launchAt = BARRAGE_START;
+      while (launchAt <= end) {
+        barrage.push({
+          id: id++,
+          kind: "fake",
+          columnX: randomInt(stageRect.width),
+          launchAt,
+          speed: FAKE_RAY_SPEED + randomInt(41),
+          damage: 0,
+          triggered: false,
+          aimed: true,
+        });
+        const step = CADENCE + randomInt(41);
+        launchAt += Math.round(step / Math.max(1, dodgeCount / 8));
+      }
 
-    const total = barrage.length;
-    const slots = new Set<number>();
-    while (slots.size < Math.min(dodgeCount, total)) {
-      slots.add(randomInt(total));
-    }
-    for (const slot of slots) {
-      const beam = barrage[slot];
-      beam.kind = "real";
-      beam.columnX = 0;
-      beam.speed = RAY_SPEED + randomInt(31);
-      beam.damage = 1;
-      beam.aimed = false;
-    }
+      const total = barrage.length;
+      const slots = new Set<number>();
+      while (slots.size < Math.min(dodgeCount, total)) {
+        slots.add(randomInt(total));
+      }
+      for (const slot of slots) {
+        const beam = barrage[slot];
+        beam.kind = "real";
+        beam.columnX = 0;
+        beam.speed = RAY_SPEED + randomInt(31);
+        beam.damage = 1;
+        beam.aimed = false;
+      }
 
-    setBeams([...barrage]);
-    setPhase("dodge");
+      setBeams([...barrage]);
+      setPhase("dodge");
+    }, 900);
+    return () => clearTimeout(timer);
   }, [dodgeCount]);
 
   useEffect(() => {
@@ -280,7 +282,19 @@ export default function CoopBattle({
     if (!dragRef.current) return;
     const stageWidth = stageRef.current?.getBoundingClientRect().width ?? 1;
     const delta = ((event.clientX - dragRef.current.startX) / stageWidth) * 100;
-    setMyX(clamp(dragRef.current.startPct + delta, BRONZE_MIN, BRONZE_MAX));
+    const nextX = clamp(
+      dragRef.current.startPct + delta,
+      BRONZE_MIN,
+      BRONZE_MAX
+    );
+    setMyX(nextX);
+    if (dodgeCount != null) {
+      const now = Date.now();
+      if (now - lastDodgeSendRef.current > 90) {
+        lastDodgeSendRef.current = now;
+        onDodgeMove(nextX);
+      }
+    }
   }
 
   function handlePointerUp() {
@@ -289,44 +303,24 @@ export default function CoopBattle({
 
   return (
     <section className={styles.arena}>
-      <div className={styles.multiBattleHeader}>
-        <div className={styles.roundLog}>
-          {lastRound ? (
-            <>
-              <p className={styles.roundLogActor}>{lastRound.actorName}</p>
-              <p>
-                {lastRound.playerAttack} <strong>{lastRound.playerRoll}</strong>{" "}
-                vs {lastRound.enemyAttack}{" "}
-                <strong>{lastRound.enemyRoll}</strong>
-              </p>
-              {lastRound.winner === "player" && (
-                <p className={styles.roundLogWin}>
-                  ¡Golpe al Gold! −{lastRound.damage} · cura +{lastRound.heal}
-                </p>
-              )}
-              {lastRound.winner === "enemy" && (
-                <p className={styles.roundLogLose}>
-                  {dodging ? "¡Esquiva los rayos!" : "Recibe el golpe"}
-                </p>
-              )}
-              {lastRound.winner === "tie" && (
-                <p className={styles.roundLogTie}>Empate, sin daño</p>
-              )}
-            </>
-          ) : (
-            <p className={styles.lobbyStatus}>
-              El primer ataque de {players[turn]?.knightName ?? "…"}…
-            </p>
-          )}
-        </div>
-      </div>
-
-      <span className={styles.multiGoldCount}>
-        Gold {goldIndex + 1} de 12
-      </span>
-      {status && <p className={styles.multiTurnInfo}>{status}</p>}
-
       <div className={styles.arenaStage} ref={stageRef}>
+        {lastRound && (
+          <>
+            <div
+              className={styles.rollFloat}
+              key={`p-${lastRound.playerRoll}-${lastRound.enemyRoll}`}
+            >
+              {lastRound.playerRoll}
+            </div>
+            <div
+              className={`${styles.rollFloat} ${styles.rollFloatEnemy}`}
+              key={`e-${lastRound.enemyRoll}-${lastRound.playerRoll}`}
+            >
+              {lastRound.enemyRoll}
+            </div>
+          </>
+        )}
+
         <article
           ref={goldRef}
           className={`${styles.fighter} ${styles.fighterGold} ${
@@ -348,27 +342,23 @@ export default function CoopBattle({
         </article>
 
         {backs.map((member, backIndex) => {
-          const originalIndex =
-            backIndex < myIndex ? backIndex : backIndex + 1;
-          const isTurn = originalIndex === turn;
+          const backX =
+            member.dodgeCount != null && member.dodgeX != null
+              ? member.dodgeX
+              : 50;
           return (
             <article
               key={member.id}
               className={`${styles.fighter} ${styles.fighterBronze} ${
                 styles.multiBack
-              } ${!member.alive ? styles.multiDead : ""} ${
-                isTurn ? styles.multiTurnGlow : ""
-              }`}
+              } ${!member.alive ? styles.multiDead : ""}`}
               style={{
-                left: "50%",
+                left: `${backX}%`,
                 zIndex: backZ(backIndex),
                 transform: `translateX(-50%) translateY(${12 + backIndex * 10}px)`,
               }}
             >
-              <h2 className={styles.fighterName}>
-                {member.knightName}
-                {isTurn ? " 👉" : ""}
-              </h2>
+              <h2 className={styles.fighterName}>{member.knightName}</h2>
               <div className={styles.fighterFigure}>
                 <Image
                   className={styles.fighterImage}
@@ -392,14 +382,10 @@ export default function CoopBattle({
             onPointerCancel={handlePointerUp}
             className={`${styles.fighter} ${styles.fighterBronze} ${
               styles.multiMine
-            } ${!mine.alive ? styles.multiDead : ""} ${
-              myIndex === turn ? styles.multiTurnGlow : ""
-            }`}
+            } ${!mine.alive ? styles.multiDead : ""}`}
             style={{ left: `${myX}%`, zIndex: 10 }}
           >
-            <h2 className={styles.fighterName}>
-              {mine.knightName} ✱
-            </h2>
+            <h2 className={styles.fighterName}>{mine.knightName}</h2>
             <div className={styles.fighterFigure}>
               <Image
                 className={styles.fighterImage}

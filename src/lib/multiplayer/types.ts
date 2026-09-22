@@ -37,6 +37,7 @@ export interface RoomPlayer {
   goldIndex: number;
   inDuel: boolean;
   dodgeCount: number | null;
+  dodgeX: number | null;
 }
 
 export interface DuelState {
@@ -44,6 +45,7 @@ export interface DuelState {
   goldHp: number;
   goldMaxHp: number;
   turn: number;
+  actorId: string | null;
   lastRound: RollEvent | null;
 }
 
@@ -65,4 +67,5 @@ export type MpMessage =
   | { type: "attack"; payload: { attackIndex: number } }
   | { type: "dodgeHit" }
   | { type: "dodgeEnd" }
+  | { type: "dodgeX"; payload: { x: number } }
   | { type: "error"; payload: { message: string } };

@@ -97,6 +97,7 @@ function advancePlayer(state: RoomState, player: RoomPlayer): void {
   player.goldIndex += 1;
   player.inDuel = false;
   player.dodgeCount = null;
+  player.dodgeX = null;
   const maze = ensureMaze(state, player.goldIndex);
   player.pos = { ...maze.start };
 }
@@ -129,6 +130,7 @@ function joinDuel(state: RoomState, player: RoomPlayer): void {
       goldHp: gold.vida,
       goldMaxHp: gold.vida,
       turn: -1,
+      actorId: null,
       lastRound: null,
     };
     state.duels[goldIndex] = duel;
@@ -225,14 +227,23 @@ export function resolveAttack(
   );
   duel.lastRound = { ...result, actorName: player.knightName };
 
+  duel.actorId = player.id;
+
   if (result.winner === "player") {
     duel.goldHp -= result.damage;
     player.hp = Math.min(player.maxHp, player.hp + result.heal);
   } else if (result.winner === "enemy") {
-    player.dodgeCount = Math.max(1, result.enemyRoll);
+    const hits = Math.max(1, result.enemyRoll);
+    for (const member of memberPlayers(state, duel.memberIds)) {
+      if (member.alive) {
+        member.dodgeCount = hits;
+        member.dodgeX = null;
+      }
+    }
     return state;
   } else {
     player.dodgeCount = null;
+    duel.actorId = null;
   }
 
   if (duel.goldHp <= 0) {
@@ -261,6 +272,7 @@ export function disconnectPlayer(state: RoomState, playerId: string): RoomState 
   player.alive = false;
   player.inDuel = false;
   player.dodgeCount = null;
+  player.dodgeX = null;
   player.name = `${player.name} (desconectado)`;
 
   const goldIndex = player.goldIndex;
@@ -288,6 +300,8 @@ export function dodgeHit(state: RoomState, playerId: string): RoomState {
   if (state.phase !== "play") return state;
   const player = playerById(state, playerId);
   if (!player || player.dodgeCount == null) return state;
+  const duel = state.duels[player.goldIndex];
+  if (!duel || duel.actorId !== playerId) return state;
   player.hp = Math.max(0, player.hp - 1);
   player.alive = player.hp > 0;
   if (!player.alive) {
@@ -298,14 +312,28 @@ export function dodgeHit(state: RoomState, playerId: string): RoomState {
   return state;
 }
 
+export function dodgeMove(state: RoomState, playerId: string, x: number): RoomState {
+  if (state.phase !== "play") return state;
+  const player = playerById(state, playerId);
+  if (!player || player.dodgeCount == null) return state;
+  player.dodgeX = Math.max(6, Math.min(78, x));
+  return state;
+}
+
 export function dodgeEnd(state: RoomState, playerId: string): RoomState {
   if (state.phase !== "play") return state;
   const player = playerById(state, playerId);
   if (!player || player.dodgeCount == null) return state;
-  player.dodgeCount = null;
   const goldIndex = player.goldIndex;
   const duel = state.duels[goldIndex];
   if (!duel) return state;
+  const isActor = player.id === duel.actorId;
+  for (const member of memberPlayers(state, duel.memberIds)) {
+    member.dodgeCount = null;
+    member.dodgeX = null;
+  }
+  duel.actorId = null;
+  if (!isActor) return state;
 
   const aliveMembers = memberPlayers(state, duel.memberIds).filter(
     (item) => item.alive
@@ -332,6 +360,7 @@ export function startPlayState(state: RoomState): RoomState {
     player.goldIndex = 0;
     player.inDuel = false;
     player.dodgeCount = null;
+    player.dodgeX = null;
     const maze = ensureMaze(state, player.goldIndex);
     player.pos = { ...maze.start };
   }

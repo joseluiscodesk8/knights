@@ -7,6 +7,7 @@ import {
   disconnectPlayer,
   dodgeEnd,
   dodgeHit,
+  dodgeMove,
   goldCount,
   movePlayer,
   resolveAttack,
@@ -44,6 +45,7 @@ function player(id: string, overrides: Partial<RoomPlayer> = {}): RoomPlayer {
     goldIndex: 0,
     inDuel: false,
     dodgeCount: null,
+    dodgeX: null,
     ...overrides,
   };
 }
@@ -155,10 +157,12 @@ describe("gameplay multiplayer", () => {
 
     resolveAttack(state, 0, 0);
     expect(state.players[0].dodgeCount).toBe(9);
+    expect(state.players[1].dodgeCount).toBe(9);
     expect(state.players[0].alive).toBe(true);
     dodgeHit(state, "a");
     expect(state.players[0].alive).toBe(false);
     dodgeEnd(state, "a");
+    expect(state.players.every((item) => item.dodgeCount === null)).toBe(true);
 
     resolveAttack(state, 1, 0);
     expect(state.players[1].dodgeCount).toBe(9);
@@ -184,16 +188,42 @@ describe("gameplay multiplayer", () => {
 
     resolveAttack(state, 0, 0);
     expect(state.players[0].dodgeCount).toBe(9);
+    expect(state.players[1].dodgeCount).toBe(9);
     expect(state.players[0].hp).toBe(10);
     expect(state.duels[0].turn).toBe(0);
 
     dodgeHit(state, "a");
     expect(state.players[0].hp).toBe(9);
+    dodgeHit(state, "b");
+    expect(state.players[1].hp).toBe(10);
 
     dodgeEnd(state, "a");
     expect(state.players[0].dodgeCount).toBeNull();
+    expect(state.players[1].dodgeCount).toBeNull();
     expect(state.duels[0].turn).toBe(1);
 
+    spy.mockRestore();
+  });
+
+  it("dodgeMove actualiza la posición visual durante la esquiva", () => {
+    const state = stateWith([player("a"), player("b")], { 0: testMaze() });
+    movePlayer(state, "a", { row: 0, col: 1 });
+    movePlayer(state, "a", { row: 0, col: 0 });
+    movePlayer(state, "b", { row: 0, col: 1 });
+    movePlayer(state, "b", { row: 0, col: 0 });
+
+    const spy = vi.spyOn(Math, "random");
+    spy.mockReturnValueOnce(0.05).mockReturnValueOnce(0.05).mockReturnValueOnce(0.95);
+    resolveAttack(state, 0, 0);
+    dodgeMove(state, "a", 63);
+    expect(state.players[0].dodgeX).toBe(63);
+    dodgeMove(state, "b", 20);
+    expect(state.players[1].dodgeX).toBe(20);
+    dodgeMove(state, "b", 400);
+    expect(state.players[1].dodgeX).toBe(78);
+
+    dodgeEnd(state, "a");
+    expect(state.players[0].dodgeX).toBeNull();
     spy.mockRestore();
   });
 

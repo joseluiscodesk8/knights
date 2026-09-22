@@ -11,6 +11,7 @@ import {
   disconnectPlayer,
   dodgeEnd,
   dodgeHit,
+  dodgeMove,
   goldCount,
   movePlayer,
   resolveAttack,
@@ -89,6 +90,7 @@ export default function MultiplayerGame({
       goldIndex: 0,
       inDuel: false,
       dodgeCount: null,
+      dodgeX: null,
     };
   }
 
@@ -140,6 +142,7 @@ export default function MultiplayerGame({
               goldIndex: 0,
               inDuel: false,
               dodgeCount: null,
+              dodgeX: null,
             },
           ],
         };
@@ -176,6 +179,13 @@ export default function MultiplayerGame({
       if (message.type === "dodgeEnd") {
         if (!current || current.phase !== "play") return;
         applyRoom(dodgeEnd(cloneState(current), peerId));
+        broadcastRoom();
+        return;
+      }
+
+      if (message.type === "dodgeX") {
+        if (!current || current.phase !== "play") return;
+        applyRoom(dodgeMove(cloneState(current), peerId, message.payload.x));
         broadcastRoom();
       }
     },
@@ -340,6 +350,18 @@ export default function MultiplayerGame({
     }
   }
 
+  function handleLocalDodgeMove(x: number) {
+    const current = roomRef.current;
+    const transport = transportRef.current;
+    if (!current || current.phase !== "play" || !transport) return;
+    if (transport.isHost) {
+      applyRoom(dodgeMove(cloneState(current), myId, x));
+      broadcastRoom();
+    } else {
+      transport.sendToEveryone({ type: "dodgeX", payload: { x } });
+    }
+  }
+
   function handleBack() {
     transportRef.current?.destroy();
     transportRef.current = null;
@@ -387,16 +409,15 @@ export default function MultiplayerGame({
         return (
           <CoopBattle
             goldKnight={gold}
-            goldIndex={view.goldIndex}
             goldHp={duel.goldHp}
             players={members}
             myIndex={members.findIndex((player) => player.id === myId)}
             turn={duel.turn}
             lastRound={duel.lastRound}
-            status={room.message}
             onAttack={handleLocalAttack}
             onDodgeHit={handleLocalDodgeHit}
             onDodgeEnd={handleLocalDodgeEnd}
+            onDodgeMove={handleLocalDodgeMove}
           />
         );
       }
