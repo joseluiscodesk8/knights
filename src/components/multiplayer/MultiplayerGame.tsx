@@ -9,6 +9,8 @@ import MultiplayerEnd from "@/components/multiplayer/MultiplayerEnd";
 import {
   cloneState,
   disconnectPlayer,
+  dodgeEnd,
+  dodgeHit,
   goldCount,
   movePlayer,
   resolveAttack,
@@ -86,6 +88,7 @@ export default function MultiplayerGame({
       alive: true,
       goldIndex: 0,
       inDuel: false,
+      dodgeCount: null,
     };
   }
 
@@ -136,6 +139,7 @@ export default function MultiplayerGame({
               alive: true,
               goldIndex: 0,
               inDuel: false,
+              dodgeCount: null,
             },
           ],
         };
@@ -158,6 +162,20 @@ export default function MultiplayerGame({
         );
         if (index === -1) return;
         applyRoom(resolveAttack(cloneState(current), index, message.payload.attackIndex));
+        broadcastRoom();
+        return;
+      }
+
+      if (message.type === "dodgeHit") {
+        if (!current || current.phase !== "play") return;
+        applyRoom(dodgeHit(cloneState(current), peerId));
+        broadcastRoom();
+        return;
+      }
+
+      if (message.type === "dodgeEnd") {
+        if (!current || current.phase !== "play") return;
+        applyRoom(dodgeEnd(cloneState(current), peerId));
         broadcastRoom();
       }
     },
@@ -298,6 +316,30 @@ export default function MultiplayerGame({
     }
   }
 
+  function handleLocalDodgeHit() {
+    const current = roomRef.current;
+    const transport = transportRef.current;
+    if (!current || current.phase !== "play" || !transport) return;
+    if (transport.isHost) {
+      applyRoom(dodgeHit(cloneState(current), myId));
+      broadcastRoom();
+    } else {
+      transport.sendToEveryone({ type: "dodgeHit" });
+    }
+  }
+
+  function handleLocalDodgeEnd() {
+    const current = roomRef.current;
+    const transport = transportRef.current;
+    if (!current || current.phase !== "play" || !transport) return;
+    if (transport.isHost) {
+      applyRoom(dodgeEnd(cloneState(current), myId));
+      broadcastRoom();
+    } else {
+      transport.sendToEveryone({ type: "dodgeEnd" });
+    }
+  }
+
   function handleBack() {
     transportRef.current?.destroy();
     transportRef.current = null;
@@ -353,6 +395,8 @@ export default function MultiplayerGame({
             lastRound={duel.lastRound}
             status={room.message}
             onAttack={handleLocalAttack}
+            onDodgeHit={handleLocalDodgeHit}
+            onDodgeEnd={handleLocalDodgeEnd}
           />
         );
       }
@@ -390,7 +434,7 @@ export default function MultiplayerGame({
       <MultiplayerEnd
         result={room.result ?? "gameover"}
         goldIndex={progress}
-        playerName={displayName}
+        playerName={knight.name}
         onExit={handleBack}
       />
     );

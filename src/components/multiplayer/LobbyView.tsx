@@ -78,10 +78,7 @@ export default function LobbyView({
                 {players.map((player) => (
                   <li key={player.id} className={styles.lobbyPlayer}>
                     <span className={styles.lobbyPlayerDot} />
-                    <strong>{player.name}</strong>
-                    <span className={styles.lobbyPlayerKnight}>
-                      {player.knightName}
-                    </span>
+                    <strong>{player.knightName}</strong>
                   </li>
                 ))}
               </ul>

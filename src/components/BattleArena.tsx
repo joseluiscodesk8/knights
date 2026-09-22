@@ -49,7 +49,7 @@ const BARRAGE_START = 350;
 const BARRAGE_DURATION = 10000;
 const BARRAGE_END = BARRAGE_START + BARRAGE_DURATION;
 
-interface RayStyle {
+export interface RayStyle {
   color: string;
   glow: string;
   glowSoft: string;
@@ -59,7 +59,7 @@ interface RayStyle {
   speedFactor?: number;
 }
 
-const RAY_STYLES: Record<string, RayStyle> = {
+export const RAY_STYLES: Record<string, RayStyle> = {
   stardust: {
     color: "#ffd98a",
     glow: "rgba(255, 215, 120, 0.9)",

@@ -36,6 +36,7 @@ export interface RoomPlayer {
   alive: boolean;
   goldIndex: number;
   inDuel: boolean;
+  dodgeCount: number | null;
 }
 
 export interface DuelState {
@@ -62,4 +63,6 @@ export type MpMessage =
   | { type: "room"; payload: RoomState }
   | { type: "move"; payload: Position }
   | { type: "attack"; payload: { attackIndex: number } }
+  | { type: "dodgeHit" }
+  | { type: "dodgeEnd" }
   | { type: "error"; payload: { message: string } };

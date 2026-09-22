@@ -5,6 +5,8 @@ import type { Maze } from "@/lib/maze";
 import {
   cloneState,
   disconnectPlayer,
+  dodgeEnd,
+  dodgeHit,
   goldCount,
   movePlayer,
   resolveAttack,
@@ -41,6 +43,7 @@ function player(id: string, overrides: Partial<RoomPlayer> = {}): RoomPlayer {
     alive: true,
     goldIndex: 0,
     inDuel: false,
+    dodgeCount: null,
     ...overrides,
   };
 }
@@ -130,7 +133,7 @@ describe("gameplay multiplayer", () => {
     expect(next.duels[2]).toBeUndefined();
   });
 
-  it("si todo el grupo cae en el duelo → gameover", () => {
+  it("si todo el grupo cae esquivando → gameover", () => {
     const state = stateWith(
       [
         player("a", { goldIndex: 2, hp: 1 }),
@@ -143,23 +146,55 @@ describe("gameplay multiplayer", () => {
 
     const spy = vi.spyOn(Math, "random");
     spy
-      .mockReturnValueOnce(0.5)
-      .mockReturnValueOnce(0.26)
+      .mockReturnValueOnce(0.05)
+      .mockReturnValueOnce(0.05)
       .mockReturnValueOnce(0.95)
-      .mockReturnValueOnce(0.5)
-      .mockReturnValueOnce(0.26)
+      .mockReturnValueOnce(0.05)
+      .mockReturnValueOnce(0.05)
       .mockReturnValueOnce(0.95);
-const afterFirst = resolveAttack(state, 0, 0);
 
+    resolveAttack(state, 0, 0);
+    expect(state.players[0].dodgeCount).toBe(9);
+    expect(state.players[0].alive).toBe(true);
+    dodgeHit(state, "a");
     expect(state.players[0].alive).toBe(false);
-    expect(afterFirst.duels[2]).toBeDefined();
-    expect(afterFirst.duels[2].turn).toBe(1);
+    dodgeEnd(state, "a");
 
-    const end = resolveAttack(state, 1, 0);
+    resolveAttack(state, 1, 0);
+    expect(state.players[1].dodgeCount).toBe(9);
+    dodgeHit(state, "b");
+    expect(state.players[1].alive).toBe(false);
+    dodgeEnd(state, "b");
     spy.mockRestore();
 
-    expect(end.phase).toBe("end");
-    expect(end.result).toBe("gameover");
+    expect(state.phase).toBe("end");
+    expect(state.result).toBe("gameover");
+  });
+
+  it("golpe del Gold entra en esquiva y dodgeEnd rota turno y reduce HP por impacto", () => {
+    const state = stateWith([player("a"), player("b")], { 0: testMaze() });
+    movePlayer(state, "a", { row: 0, col: 1 });
+    movePlayer(state, "a", { row: 0, col: 0 });
+    movePlayer(state, "b", { row: 0, col: 1 });
+    movePlayer(state, "b", { row: 0, col: 0 });
+    expect(state.duels[0].turn).toBe(0);
+
+    const spy = vi.spyOn(Math, "random");
+    spy.mockReturnValueOnce(0.05).mockReturnValueOnce(0.05).mockReturnValueOnce(0.95);
+
+    resolveAttack(state, 0, 0);
+    expect(state.players[0].dodgeCount).toBe(9);
+    expect(state.players[0].hp).toBe(10);
+    expect(state.duels[0].turn).toBe(0);
+
+    dodgeHit(state, "a");
+    expect(state.players[0].hp).toBe(9);
+
+    dodgeEnd(state, "a");
+    expect(state.players[0].dodgeCount).toBeNull();
+    expect(state.duels[0].turn).toBe(1);
+
+    spy.mockRestore();
   });
 
   it("desconectar a un jugador pendiente desbloquea el duelo", () => {

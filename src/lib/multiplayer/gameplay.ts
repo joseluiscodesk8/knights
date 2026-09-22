@@ -19,7 +19,10 @@ const goldKnights = getGoldKnights();
 export function cloneState(state: RoomState): RoomState {
   return {
     ...state,
-    players: state.players.map((player) => ({ ...player, pos: { ...player.pos } })),
+    players: state.players.map((player) => ({
+      ...player,
+      pos: { ...player.pos },
+    })),
     mazes: { ...state.mazes },
     duels: Object.fromEntries(
       Object.entries(state.duels).map(([key, duel]) => [
@@ -86,13 +89,14 @@ function maybeStartDuels(state: RoomState): void {
     duel.turn = 0;
     const gold = goldKnights[goldIndex] ?? goldKnights[0];
     const first = memberPlayers(state, duel.memberIds)[0];
-    state.message = `¡${gold.name} os espera! Ataca primero ${first?.name ?? "alguien del grupo"}.`;
+    state.message = `¡${gold.name} os espera! Ataca primero ${first?.knightName ?? "alguien del grupo"}.`;
   }
 }
 
 function advancePlayer(state: RoomState, player: RoomPlayer): void {
   player.goldIndex += 1;
   player.inDuel = false;
+  player.dodgeCount = null;
   const maze = ensureMaze(state, player.goldIndex);
   player.pos = { ...maze.start };
 }
@@ -136,8 +140,8 @@ function joinDuel(state: RoomState, player: RoomPlayer): void {
     (item) => item.alive && item.goldIndex === goldIndex && !item.inDuel
   );
   state.message = pending
-    ? `${player.name} llegó a la X. Esperando al resto del grupo…`
-    : `${player.name} llegó a la X. ¡La pelea comienza!`;
+    ? `${player.knightName} llegó a la X. Esperando al resto del grupo…`
+    : `${player.knightName} llegó a la X. ¡La pelea comienza!`;
   maybeStartDuels(state);
 }
 
@@ -148,7 +152,7 @@ function duelWon(state: RoomState, goldIndex: number): void {
   winners.forEach((player) => advancePlayer(state, player));
   const gold = goldKnights[goldIndex] ?? goldKnights[0];
   if (winners.length > 0) {
-    state.message = `${winners.map((player) => player.name).join(", ")} derrotó a ${
+    state.message = `${winners.map((player) => player.knightName).join(", ")} derrotó a ${
       gold.name
     }. ¡A la siguiente batalla!`;
   }
@@ -178,7 +182,7 @@ export function movePlayer(
   if (me.goldIndex === GEMINI_INDEX && atReal) {
     const gold = goldKnights[GEMINI_INDEX];
     advancePlayer(state, me);
-    state.message = `${me.name} alcanzó la X real de ${
+    state.message = `${me.knightName} alcanzó la X real de ${
       gold.name
     } y se adelantó a la próxima batalla.`;
     maybeStartDuels(state);
@@ -219,15 +223,17 @@ export function resolveAttack(
     playerAttack,
     enemyAttack
   );
-  duel.lastRound = { ...result, actorName: player.name };
+  duel.lastRound = { ...result, actorName: player.knightName };
 
   if (result.winner === "player") {
     duel.goldHp -= result.damage;
     player.hp = Math.min(player.maxHp, player.hp + result.heal);
   } else if (result.winner === "enemy") {
-    player.hp = Math.max(0, player.hp - result.damage);
+    player.dodgeCount = Math.max(1, result.enemyRoll);
+    return state;
+  } else {
+    player.dodgeCount = null;
   }
-  player.alive = player.hp > 0;
 
   if (duel.goldHp <= 0) {
     duelWon(state, goldIndex);
@@ -254,6 +260,7 @@ export function disconnectPlayer(state: RoomState, playerId: string): RoomState 
   if (!player || !player.alive) return state;
   player.alive = false;
   player.inDuel = false;
+  player.dodgeCount = null;
   player.name = `${player.name} (desconectado)`;
 
   const goldIndex = player.goldIndex;
@@ -277,6 +284,45 @@ export function disconnectPlayer(state: RoomState, playerId: string): RoomState 
   return state;
 }
 
+export function dodgeHit(state: RoomState, playerId: string): RoomState {
+  if (state.phase !== "play") return state;
+  const player = playerById(state, playerId);
+  if (!player || player.dodgeCount == null) return state;
+  player.hp = Math.max(0, player.hp - 1);
+  player.alive = player.hp > 0;
+  if (!player.alive) {
+    state.message = `${player.knightName} cayó esquivando los rayos de ${
+      goldKnights[player.goldIndex]?.name ?? "…"
+    }.`;
+  }
+  return state;
+}
+
+export function dodgeEnd(state: RoomState, playerId: string): RoomState {
+  if (state.phase !== "play") return state;
+  const player = playerById(state, playerId);
+  if (!player || player.dodgeCount == null) return state;
+  player.dodgeCount = null;
+  const goldIndex = player.goldIndex;
+  const duel = state.duels[goldIndex];
+  if (!duel) return state;
+
+  const aliveMembers = memberPlayers(state, duel.memberIds).filter(
+    (item) => item.alive
+  );
+  if (aliveMembers.length === 0) {
+    delete state.duels[goldIndex];
+    const gold = goldKnights[goldIndex] ?? goldKnights[0];
+    state.message = `El grupo contra ${gold.name} cayó en combate.`;
+    checkEnd(state);
+    return state;
+  }
+
+  duel.turn = (duel.memberIds.indexOf(player.id) + 1) % duel.memberIds.length;
+  rotateTurn(state, goldIndex);
+  return state;
+}
+
 export function startPlayState(state: RoomState): RoomState {
   state.mazes = {};
   state.duels = {};
@@ -285,6 +331,7 @@ export function startPlayState(state: RoomState): RoomState {
   for (const player of state.players) {
     player.goldIndex = 0;
     player.inDuel = false;
+    player.dodgeCount = null;
     const maze = ensureMaze(state, player.goldIndex);
     player.pos = { ...maze.start };
   }

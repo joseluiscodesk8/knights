@@ -1,8 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import { animate } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 
-import { HpRing } from "@/components/BattleArena";
+import { HpRing, RAY_STYLES } from "@/components/BattleArena";
+import { randomInt } from "@/lib/battle";
 import type { RoomPlayer, RollEvent } from "@/lib/multiplayer/types";
 import { Knight } from "@/types/knights";
 
@@ -18,11 +21,41 @@ interface CoopBattleProps {
   lastRound: RollEvent | null;
   status?: string;
   onAttack: (attackIndex: number) => void;
+  onDodgeHit: () => void;
+  onDodgeEnd: () => void;
 }
 
-function backLeft(index: number, total: number): number {
-  if (total <= 1) return 50;
-  return 8 + (index * 84) / (total - 1);
+interface Beam {
+  id: number;
+  kind: "real" | "fake";
+  columnX: number;
+  launchAt: number;
+  speed: number;
+  damage: number;
+  triggered: boolean;
+  aimed: boolean;
+}
+
+interface Impact {
+  id: number;
+  x: number;
+  y: number;
+}
+
+const HIT_RANGE = 46;
+const BRONZE_MIN = 6;
+const BRONZE_MAX = 78;
+const RAY_SPEED = 190;
+const FAKE_RAY_SPEED = 105;
+const CADENCE = 55;
+const BARRAGE_START = 350;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function backZ(index: number): number {
+  return index + 2;
 }
 
 export default function CoopBattle({
@@ -35,9 +68,224 @@ export default function CoopBattle({
   lastRound,
   status,
   onAttack,
+  onDodgeHit,
+  onDodgeEnd,
 }: CoopBattleProps) {
-  const backs = players.filter((_, index) => index !== myIndex);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const goldRef = useRef<HTMLDivElement>(null);
+  const myRef = useRef<HTMLDivElement>(null);
+  const beamsRef = useRef<Beam[]>([]);
+  const beamElsRef = useRef<Map<number, HTMLDivElement>>(new Map());
+  const myXRef = useRef(BRONZE_MIN);
+  const dragRef = useRef<{ startX: number; startPct: number } | null>(null);
+  const flashIdRef = useRef(0);
+  const rowsRef = useRef({ topStart: 0, floor: 0, height: 0, hitT: 1 });
+
+  const [myX, setMyX] = useState(BRONZE_MIN);
+  const [phase, setPhase] = useState<"idle" | "dodge">("idle");
+  const [beams, setBeams] = useState<Beam[]>([]);
+  const [beamRows, setBeamRows] = useState({
+    topStart: 0,
+    floor: 0,
+    height: 0,
+    hitT: 1,
+  });
+  const [flashes, setFlashes] = useState<Impact[]>([]);
+
   const mine = players[myIndex];
+  const backs = players.filter((_, index) => index !== myIndex);
+  const dodging = !!(mine && mine.dodgeCount != null);
+  const rayStyle = RAY_STYLES[goldKnight.rayStyle ?? ""] ?? RAY_STYLES.stardust;
+
+  useEffect(() => {
+    myXRef.current = myX;
+  }, [myX]);
+
+  useEffect(() => {
+    beamsRef.current = beams;
+  }, [beams]);
+
+  const dodgeCount = mine?.dodgeCount ?? null;
+
+  useEffect(() => {
+    if (dodgeCount == null) return;
+    const stage = stageRef.current;
+    const gold = goldRef.current;
+    const me = myRef.current;
+    if (!stage || !gold || !me) return;
+
+    const stageRect = stage.getBoundingClientRect();
+    const goldRect = gold.getBoundingClientRect();
+    const meRect = me.getBoundingClientRect();
+
+    const rows = {
+      topStart: goldRect.top - stageRect.top - 6,
+      floor: meRect.top + meRect.height / 2 - stageRect.top,
+      height: stageRect.height - (goldRect.top - stageRect.top - 6) + 80,
+      hitT: 1,
+    };
+    rows.hitT = (rows.floor - rows.topStart) / rows.height;
+    rowsRef.current = rows;
+    setBeamRows(rows);
+
+    const barrage: Beam[] = [];
+    let id = 0;
+
+    const duration = Math.min(9000, 2200 + dodgeCount * 380);
+    const end = BARRAGE_START + duration;
+    let launchAt = BARRAGE_START;
+    while (launchAt <= end) {
+      barrage.push({
+        id: id++,
+        kind: "fake",
+        columnX: randomInt(stageRect.width),
+        launchAt,
+        speed: FAKE_RAY_SPEED + randomInt(41),
+        damage: 0,
+        triggered: false,
+        aimed: true,
+      });
+      const step = CADENCE + randomInt(41);
+      launchAt += Math.round(step / Math.max(1, dodgeCount / 8));
+    }
+
+    const total = barrage.length;
+    const slots = new Set<number>();
+    while (slots.size < Math.min(dodgeCount, total)) {
+      slots.add(randomInt(total));
+    }
+    for (const slot of slots) {
+      const beam = barrage[slot];
+      beam.kind = "real";
+      beam.columnX = 0;
+      beam.speed = RAY_SPEED + randomInt(31);
+      beam.damage = 1;
+      beam.aimed = false;
+    }
+
+    setBeams([...barrage]);
+    setPhase("dodge");
+  }, [dodgeCount]);
+
+  useEffect(() => {
+    if (phase !== "dodge") return;
+
+    const rows = rowsRef.current;
+    const timers: Array<ReturnType<typeof setTimeout>> = [];
+    const controlsList: Array<ReturnType<typeof animate>> = [];
+    const counted = new Set<number>();
+    let remaining = beamsRef.current.length;
+    let finished = false;
+
+    function myCenterX(): number {
+      const stage = stageRef.current;
+      if (!stage) return 0;
+      const stageRect = stage.getBoundingClientRect();
+      return (myXRef.current / 100) * stageRect.width;
+    }
+
+    function addImpact(x: number, y: number) {
+      const impactId = flashIdRef.current++;
+      setFlashes((current) => [
+        ...current,
+        { id: impactId, x, y: y + randomInt(21) - 10 },
+      ]);
+      setTimeout(() => {
+        setFlashes((current) => current.filter((hit) => hit.id !== impactId));
+      }, 320);
+    }
+
+    function finish() {
+      if (finished) return;
+      finished = true;
+      setBeams([]);
+      setPhase("idle");
+      onDodgeEnd();
+    }
+
+    function settle(beamId: number) {
+      if (counted.has(beamId)) return;
+      counted.add(beamId);
+      remaining -= 1;
+      if (remaining <= 0) finish();
+    }
+
+    for (const beam of beamsRef.current) {
+      const el = beamElsRef.current.get(beam.id);
+      if (!el) {
+        settle(beam.id);
+        continue;
+      }
+
+      timers.push(
+        setTimeout(() => {
+          el.style.opacity = "1";
+          let controls: ReturnType<typeof animate> | null = null;
+          controls = animate(0, 1, {
+            duration: beam.speed / 1000,
+            ease: "easeIn",
+            onUpdate: (t) => {
+              if (beam.kind === "real" && !beam.aimed) {
+                beam.columnX = myCenterX();
+                el.style.left = `${beam.columnX}px`;
+              }
+              if (!beam.triggered && t >= rows.hitT) {
+                beam.triggered = true;
+                addImpact(beam.columnX, rows.floor);
+                if (
+                  beam.kind === "real" &&
+                  Math.abs(beam.columnX - myCenterX()) <= HIT_RANGE
+                ) {
+                  controls?.stop();
+                  el.style.transform = `scaleY(${rows.hitT})`;
+                  onDodgeHit();
+                  setTimeout(() => {
+                    el.style.transition = "opacity 300ms";
+                    el.style.opacity = "0";
+                  }, 120);
+                  beamElsRef.current.delete(beam.id);
+                  settle(beam.id);
+                  return;
+                }
+              }
+              el.style.transform = `scaleY(${t})`;
+            },
+            onComplete: () => {
+              if (beamElsRef.current.has(beam.id)) {
+                el.style.opacity = "0";
+                beamElsRef.current.delete(beam.id);
+              }
+              settle(beam.id);
+            },
+          });
+          controlsList.push(controls);
+        }, beam.launchAt)
+      );
+    }
+
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+      controlsList.forEach((controls) => controls.stop());
+      beamElsRef.current = new Map();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
+  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    dragRef.current = { startX: event.clientX, startPct: myXRef.current };
+  }
+
+  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (!dragRef.current) return;
+    const stageWidth = stageRef.current?.getBoundingClientRect().width ?? 1;
+    const delta = ((event.clientX - dragRef.current.startX) / stageWidth) * 100;
+    setMyX(clamp(dragRef.current.startPct + delta, BRONZE_MIN, BRONZE_MAX));
+  }
+
+  function handlePointerUp() {
+    dragRef.current = null;
+  }
 
   return (
     <section className={styles.arena}>
@@ -58,7 +306,7 @@ export default function CoopBattle({
               )}
               {lastRound.winner === "enemy" && (
                 <p className={styles.roundLogLose}>
-                  Recibe −{lastRound.damage} de golpe
+                  {dodging ? "¡Esquiva los rayos!" : "Recibe el golpe"}
                 </p>
               )}
               {lastRound.winner === "tie" && (
@@ -67,7 +315,7 @@ export default function CoopBattle({
             </>
           ) : (
             <p className={styles.lobbyStatus}>
-              El primer ataque de {players[turn]?.name ?? "…"}…
+              El primer ataque de {players[turn]?.knightName ?? "…"}…
             </p>
           )}
         </div>
@@ -78,8 +326,9 @@ export default function CoopBattle({
       </span>
       {status && <p className={styles.multiTurnInfo}>{status}</p>}
 
-      <div className={styles.arenaStage}>
+      <div className={styles.arenaStage} ref={stageRef}>
         <article
+          ref={goldRef}
           className={`${styles.fighter} ${styles.fighterGold} ${
             turn === -1 ? styles.multiGoldWait : ""
           }`}
@@ -111,12 +360,13 @@ export default function CoopBattle({
                 isTurn ? styles.multiTurnGlow : ""
               }`}
               style={{
-                left: `${backLeft(backIndex, backs.length)}%`,
-                zIndex: isTurn ? 3 : 2,
+                left: "50%",
+                zIndex: backZ(backIndex),
+                transform: `translateX(-50%) translateY(${12 + backIndex * 10}px)`,
               }}
             >
               <h2 className={styles.fighterName}>
-                {member.name}
+                {member.knightName}
                 {isTurn ? " 👉" : ""}
               </h2>
               <div className={styles.fighterFigure}>
@@ -135,14 +385,21 @@ export default function CoopBattle({
 
         {mine && (
           <article
+            ref={myRef}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
             className={`${styles.fighter} ${styles.fighterBronze} ${
               styles.multiMine
             } ${!mine.alive ? styles.multiDead : ""} ${
               myIndex === turn ? styles.multiTurnGlow : ""
             }`}
-            style={{ left: "50%", zIndex: 10 }}
+            style={{ left: `${myX}%`, zIndex: 10 }}
           >
-            <h2 className={styles.fighterName}>{mine.name} ✱</h2>
+            <h2 className={styles.fighterName}>
+              {mine.knightName} ✱
+            </h2>
             <div className={styles.fighterFigure}>
               <Image
                 className={styles.fighterImage}
@@ -155,6 +412,46 @@ export default function CoopBattle({
             </div>
           </article>
         )}
+
+        {beams.map((beam) => (
+          <div
+            key={beam.id}
+            ref={(el) => {
+              if (el) beamElsRef.current.set(beam.id, el);
+              else beamElsRef.current.delete(beam.id);
+            }}
+            className={[
+              styles.beam,
+              rayStyle.patternClass ? styles[rayStyle.patternClass] : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{
+              left: beam.columnX,
+              top: beamRows.topStart,
+              height: beamRows.height,
+              transform: "scaleY(0)",
+              opacity: 0,
+              width: rayStyle.width,
+              ["--beamColor" as string]: rayStyle.color,
+              ["--beamGlow" as string]: rayStyle.glow,
+              ["--beamGlowSoft" as string]: rayStyle.glowSoft,
+            }}
+          />
+        ))}
+
+        {flashes.map((impact) => (
+          <div
+            key={impact.id}
+            className={[
+              styles.beamImpact,
+              rayStyle.impactClass ? styles[rayStyle.impactClass] : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{ left: impact.x, top: impact.y }}
+          />
+        ))}
       </div>
 
       {mine?.alive && (
@@ -163,7 +460,7 @@ export default function CoopBattle({
             <button
               key={attack}
               className={styles.attackButton}
-              disabled={myIndex !== turn}
+              disabled={myIndex !== turn || dodging}
               onClick={() => onAttack(attackIndex)}
             >
               {attack}

@@ -145,7 +145,7 @@ export default function CoopMap({
         }
         ctx.drawImage(avatar, px - width / 2, py - height / 2, width, height);
         ctx.fillStyle = isMe ? "#fff" : "rgba(0,0,0,0.75)";
-        ctx.fillText(player.name, px, py - height / 2 - 4);
+        ctx.fillText(player.knightName, px, py - height / 2 - 4);
       } else {
         const radius = isMe ? CELL * 0.34 : CELL * 0.28;
         ctx.fillStyle = player.color;
@@ -162,7 +162,7 @@ export default function CoopMap({
         }
 
         ctx.fillStyle = isMe ? "#fff" : "rgba(0,0,0,0.75)";
-        ctx.fillText(player.name, px, py - radius - 6);
+        ctx.fillText(player.knightName, px, py - radius - 6);
       }
     }
   }, [maze, players, myId, images]);
